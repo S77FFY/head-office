@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="app-repo" content="head-office">
-<meta name="app-version" content="1.2.7">
+<meta name="app-version" content="1.2.8">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#17110e">
@@ -78,7 +78,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;
 #ctrl button:disabled{opacity:.32}
 #ctrl #bRun{flex:1.45;background:var(--green)}
 #work{flex:1;min-height:0;display:flex;gap:6px;padding:0 6px 6px}
-#palette{flex:none;width:128px;display:flex;flex-direction:column;gap:4px;overflow:hidden;padding:6px 5px;background:#1b130f;border-radius:5px;box-shadow:inset 0 2px 6px rgba(0,0,0,.65)}
+#palette{flex:none;width:128px;display:flex;flex-direction:column;gap:4px;overflow-y:auto;padding:6px 5px;background:#1b130f;border-radius:5px;box-shadow:inset 0 2px 6px rgba(0,0,0,.65)}
 #palette.nudge{animation:nudge .35s}
 #work.locked #palette{opacity:.35}
 #prog{flex:1;min-width:0;display:flex;flex-direction:column;padding-top:9px;background:var(--paper);border-radius:3px;position:relative;box-shadow:0 4px 14px rgba(0,0,0,.45)}
@@ -96,23 +96,24 @@ button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;
 
 /* label-tape blocks */
 .blk{display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 7px;border-radius:3px;color:#fff;font:700 13.5px/1 var(--ui);letter-spacing:.06em;white-space:nowrap;touch-action:none;cursor:grab;text-shadow:0 1px 0 rgba(0,0,0,.35);background-image:linear-gradient(to bottom,rgba(255,255,255,.26),rgba(255,255,255,0) 46%,rgba(0,0,0,.2));box-shadow:0 1px 2px rgba(0,0,0,.4)}
-#palette .blk{display:flex;height:auto;flex:0 1 28px;min-height:20px}
+#palette .blk{display:flex;height:auto;flex:0 0 28px;min-height:28px}
 .blk .who{font-weight:600;font-size:10px;opacity:.82;letter-spacing:.08em}
 .blk .to{font-size:10px;opacity:.8}
 .t-eyes{background-color:var(--eyes)}.t-ears{background-color:var(--ears)}.t-nose{background-color:var(--nose)}.t-mouth{background-color:var(--mouth)}
 .t-brain{background-color:var(--brain)}.t-pass{background-color:var(--pass)}.t-ctl{background-color:var(--ctl)}
 .blk.end{height:20px;font-size:11px;opacity:.72}
-.chip{display:inline-flex;align-items:center;height:19px;padding:0 5px;border-radius:10px;font:700 11.5px/1 var(--ui);letter-spacing:.05em;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.78);text-shadow:none}
+.chip{display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1;height:19px;padding:1px 6px 0;min-width:30px;border-radius:10px;font:700 11.5px/1 var(--ui);letter-spacing:.05em;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.78);text-shadow:none}
 .chip.c-brain{background:var(--brain)}.chip.c-eyes{background:var(--eyes)}.chip.c-ears{background:var(--ears)}.chip.c-nose{background:var(--nose)}.chip.c-mouth{background:var(--mouth)}
 .chip.tok{background:var(--paper);color:var(--ink);font-family:var(--type);border-radius:2px;letter-spacing:0;box-shadow:0 1px 0 rgba(0,0,0,.45)}
 .chip.unset{background:#fff;color:var(--red);box-shadow:inset 0 0 0 1.5px var(--red);animation:pulse 1s infinite}
+#palette .chip{min-width:18px;padding:1px 5px 0}
 #palette .chip.unset{animation:none;background:rgba(255,255,255,.2);color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6)}
 .ghost{position:fixed;left:0;top:0;z-index:50;pointer-events:none;box-shadow:0 10px 22px rgba(0,0,0,.55);opacity:.96}
 .ghost.bin{filter:grayscale(.8);opacity:.55}
 .ghost .more{font-size:10px;background:rgba(0,0,0,.35);border-radius:8px;padding:2px 5px}
 #pick{position:fixed;z-index:40;display:none;gap:6px;flex-wrap:wrap;max-width:310px;padding:8px;background:#17110e;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.65),inset 0 0 0 1px rgba(255,255,255,.16)}
 #pick.on{display:flex}
-#pick .chip{height:30px;padding:0 11px;font-size:14.5px;border-radius:15px;cursor:pointer}
+#pick .chip{height:30px;padding:1px 12px 0;font-size:14.5px;border-radius:15px;cursor:pointer}
 #pick .chip.tok{border-radius:3px}
 #pick .chip.far{opacity:.36}
 #pick .chip.off{display:none}
@@ -1297,12 +1298,12 @@ function loadLevel(i,forceTut){var seen=0;try{seen=localStorage.getItem('head-of
   S.rows=SAVE.prog[i]?JSON.parse(JSON.stringify(SAVE.prog[i])):[];
   elHome.classList.add('hide');elPlay.classList.remove('hide');bHome.classList.remove('hide');work.classList.remove('locked');
   elTtl.textContent='Smarch '+L[i].d+': '+L[i].title;
-  buildStatic();renderPalette();renderRows();resetScene();updateCtrl();S.openTo=1;nextChat=now+5000;
+  layout();renderPalette();renderRows();resetScene();updateCtrl();S.openTo=1;nextChat=now+5000;
   if(!S.rows.length)showBrief();else hideSheet();}
 function goHome(){if(TUT.on)tutEnd(false);closeMenu();TAP.from=null;RT=null;TL=[];S.mode='edit';S.busy=false;S.auto=false;S.run=null;S.screen='home';S.view=null;S.fx={};clearHands();fliers=[];closePicker();hideSheet();
-  elPlay.classList.add('hide');elHome.classList.remove('hide');bHome.classList.add('hide');elTtl.textContent='';S.openTo=0;renderHome();buildStatic();}
+  elPlay.classList.add('hide');elHome.classList.remove('hide');bHome.classList.add('hide');elTtl.textContent='';S.openTo=0;renderHome();layout();}
 function layout(){var app=$('#app'),cs=getComputedStyle(app),W=app.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),H=app.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
-  var sc=Math.max(.6,Math.min(W/390,(H-30-Math.min(285,H*.45))/VH)),dpr=Math.min(window.devicePixelRatio||1,3);
+  var np=S.screen==='play'?L[S.li].palette.length:0,ed=Math.max(Math.min(285,H*.45),np?46+16+np*32:0),sc=Math.max(.6,Math.min(W/390,(H-30-ed)/VH)),dpr=Math.min(window.devicePixelRatio||1,3);
   K=sc*dpr;cv.width=Math.round(390*K);cv.height=Math.round(VH*K);cv.style.width=390*sc+'px';cv.style.height=VH*sc+'px';
   [bg,fg,face].forEach(function(c){c.width=cv.width;c.height=cv.height;});buildStatic();}
 window.addEventListener('resize',layout);
