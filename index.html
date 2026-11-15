@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="app-repo" content="head-office">
-<meta name="app-version" content="1.3.3">
+<meta name="app-version" content="1.3.4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#17110e">
@@ -595,7 +595,7 @@ var AU=(function(){
   NB=ac.createBuffer(1,ac.sampleRate,ac.sampleRate);var d=NB.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1;
   if(ac.state!=='running')ac.resume();
   try{if(window.speechSynthesis){var u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);pickVoice();speechSynthesis.onvoiceschanged=pickVoice;}}catch(e){}
-  nt=ac.currentTime+.1;st=0;timer=setInterval(tick,30);
+  nt=ac.currentTime+.1;if(timer)clearInterval(timer);timer=setInterval(tick,30);
  }
  function tone(type,f0,f1,t,dur,v,out){var o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.setValueAtTime(f0,t);if(f1)o.frequency.exponentialRampToValueAtTime(f1,t+dur);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(out||FX);o.start(t);o.stop(t+dur+.03);}
  function nz(t,dur,v,ft,f0,f1,q,out){var b=ac.createBufferSource();b.buffer=NB;var fl=ac.createBiquadFilter();fl.type=ft;fl.frequency.setValueAtTime(f0,t);if(f1)fl.frequency.exponentialRampToValueAtTime(f1,t+dur);fl.Q.value=q||1;var g=ac.createGain();g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+Math.min(.02,dur/3));g.gain.exponentialRampToValueAtTime(.0001,t+dur);b.connect(fl);fl.connect(g);g.connect(out||FX);b.start(t,Math.random()*.5);b.stop(t+dur+.03);}
@@ -663,10 +663,12 @@ var AU=(function(){
  function fx(n){if(!ac||!pref.s||!SFX[n])return;try{SFX[n](ac.currentTime+.01);}catch(e){}}
  function unduck(){if(MU&&pref.m)MU.gain.setTargetAtTime(.2,ac.currentTime,.3);}
  function say(text,o){if(!pref.s||!window.speechSynthesis||!text)return;try{o=o||{};var u=new SpeechSynthesisUtterance(text),vv=o.other?(vOther||voice):voice;u.rate=o.rate||(old?.86:.78);u.pitch=o.pitch||(old?1:.45);if(vv){u.voice=vv;u.lang=vv.lang;}else u.lang='en-GB';
-  if(ac&&MU&&pref.m){MU.gain.setTargetAtTime(.05,ac.currentTime,.05);clearTimeout(duckT);duckT=setTimeout(unduck,3500);u.onend=function(){clearTimeout(duckT);unduck();wake();};}else u.onend=wake;
+  if(ac&&MU&&pref.m){MU.gain.setTargetAtTime(.05,ac.currentTime,.05);clearTimeout(duckT);duckT=setTimeout(unduck,3500);u.onend=function(){clearTimeout(duckT);unduck();wake();checkAlive();};}else u.onend=function(){wake();checkAlive();};
   speechSynthesis.speak(u);}catch(e){}}
- function toggle(k){pref[k]=pref[k]?0:1;save();if(ac){if(k==='m')MU.gain.setTargetAtTime(pref.m?.2:0,ac.currentTime,.05);else FX.gain.setTargetAtTime(pref.s?.55:0,ac.currentTime,.05);}if(k==='s'&&!pref.s)try{speechSynthesis.cancel();}catch(e){}return pref[k];}
- return {init:init,fx:fx,say:say,toggle:toggle,pref:function(){return pref;},ready:function(){return !!ac;}};
+ function rebuild(){try{if(timer)clearInterval(timer);timer=null;if(ac)ac.close();}catch(e){}ac=null;init();}
+ function checkAlive(){if(!ac||!pref.m)return;var t0=ac.currentTime;setTimeout(function(){if(ac&&ac.currentTime===t0&&document.visibilityState!=='hidden')rebuild();},600);}
+ function toggle(k){pref[k]=pref[k]?0:1;save();if(k==='m'&&pref.m&&ac){rebuild();return 1;}if(ac){if(k==='m')MU.gain.setTargetAtTime(pref.m?.2:0,ac.currentTime,.05);else FX.gain.setTargetAtTime(pref.s?.55:0,ac.currentTime,.05);}if(k==='s'&&!pref.s)try{speechSynthesis.cancel();}catch(e){}return pref[k];}
+ return {rebuild:rebuild,init:init,fx:fx,say:say,toggle:toggle,pref:function(){return pref;},ready:function(){return !!ac;}};
 })();
 
 function z28(v){var a=[];for(var i=0;i<28;i++)a.push(v);return a;}
