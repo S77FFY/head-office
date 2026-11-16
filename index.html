@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="app-repo" content="head-office">
-<meta name="app-version" content="1.3.4">
+<meta name="app-version" content="1.4.2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#17110e">
@@ -37,6 +37,12 @@ button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;
 .calHead{display:flex;align-items:baseline;justify-content:space-between;padding:0 3px 4px}
 .calHead h2{margin:0;font:800 25px/1 var(--ui);letter-spacing:.16em;color:var(--red)}
 .calHead span{font:11.5px var(--type);color:#6b5f4c}
+.calHead .mon{display:flex;align-items:center;gap:2px}
+.calHead .mon button{border:0;background:none;color:var(--ink);font:700 24px/1 var(--ui);padding:0 6px;opacity:.75}
+.calHead .mon button:disabled{opacity:.15}
+.calHead h2.spr{color:#2f7d4f}
+.cal.turn{animation:turn .35s}
+@keyframes turn{40%{transform:rotateX(55deg);opacity:.4}100%{transform:none;opacity:1}}
 .wk{display:grid;grid-template-columns:repeat(7,1fr);font:700 10px var(--ui);color:#8a7c66;text-align:center;padding-bottom:3px}
 .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
 .cell{position:relative;height:42px;border:0;background:#fffaf0;box-shadow:inset 0 0 0 1px #d8cbaa;border-radius:1px;padding:2px 3px;text-align:left;color:var(--ink);overflow:hidden}
@@ -93,6 +99,11 @@ button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;
 .row.lift{opacity:.22}
 .tail{height:64px}
 #mark{position:absolute;left:24px;right:6px;height:3px;margin-top:-1.5px;border-radius:2px;background:var(--red);display:none;pointer-events:none;z-index:3}
+#insMark{position:absolute;right:8px;height:2px;margin-top:-1px;border-radius:2px;background:#2f9e5a;box-shadow:0 0 6px rgba(47,158,90,.8);pointer-events:none;z-index:2;animation:pulse 1.2s infinite}
+#insMark:before{content:'';position:absolute;left:-5px;top:-3px;border:4px solid transparent;border-left:5px solid #2f9e5a}
+#wrapNote{position:absolute;left:6px;right:6px;bottom:24px;z-index:5;display:none;align-items:center;justify-content:space-between;gap:6px;padding:5px 6px 5px 9px;background:#27222b;color:var(--paper);border-radius:4px;font:11.5px var(--type);box-shadow:0 4px 12px rgba(0,0,0,.4)}
+#wrapNote.on{display:flex}
+#wrapNote button{flex:none;border:0;border-radius:3px;background:#5b3f99;color:#fff;font:600 13px var(--ui);padding:5px 9px}
 #foot{flex:none;display:flex;justify-content:space-between;padding:3px 8px 4px;font:11px var(--type);color:#7d705a;border-top:1px solid #d5c9ab}
 
 /* label-tape blocks */
@@ -101,7 +112,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;
 .blk .who{font-weight:600;font-size:10px;opacity:.82;letter-spacing:.08em}
 .blk .to{font-size:10px;opacity:.8}
 .t-eyes{background-color:var(--eyes)}.t-ears{background-color:var(--ears)}.t-nose{background-color:var(--nose)}.t-mouth{background-color:var(--mouth)}
-.t-brain{background-color:var(--brain)}.t-pass{background-color:var(--pass)}.t-ctl{background-color:var(--ctl)}
+.t-brain{background-color:var(--brain)}.t-pass{background-color:var(--pass)}.t-ctl{background-color:var(--ctl)}.t-until{background-color:#5b3f99;font-size:12px;letter-spacing:.02em;gap:3px;padding:0 5px}.t-until .chip{font-size:10.5px;padding:1px 4px 0;min-width:0}
 .blk.end{height:20px;font-size:11px;opacity:.72}
 .chip{display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1;height:19px;padding:1px 6px 0;min-width:30px;border-radius:10px;font:700 11.5px/1 var(--ui);letter-spacing:.05em;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.78);text-shadow:none}
 .chip.c-brain{background:var(--brain)}.chip.c-eyes{background:var(--eyes)}.chip.c-ears{background:var(--ears)}.chip.c-nose{background:var(--nose)}.chip.c-mouth{background:var(--mouth)}
@@ -147,7 +158,7 @@ button{font-family:inherit;color:inherit;cursor:pointer;-webkit-appearance:none;
   <main id="desk">
     <section id="home">
       <div class="cal"><div class="rings"></div>
-        <div class="calHead"><h2>Smarch</h2><span id="calSub"></span></div>
+        <div class="calHead"><div class="mon"><button id="mPrev" aria-label="Previous month">&lsaquo;</button><h2 id="calMon">Smarch</h2><button id="mNext" aria-label="Next month">&rsaquo;</button></div><span id="calSub"></span></div>
         <div class="wk"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
         <div id="days" class="grid"></div>
       </div>
@@ -176,7 +187,7 @@ var HO=(function(){
 var TECHS=['brain','eyes','ears','nose','mouth'];
 var NAMES={brain:'BRIAN',eyes:'IRIS',ears:'AUDREY',nose:'OLLY',mouth:'BUD'};
 var SENSES={LOOK:'eyes',LISTEN:'ears',SNIFF:'nose',TASTE:'mouth'};
-var FOOD={FISH:1,CHEESE:1,SOUP:1,TOAST:1,JAM:1,PIE:1,CHIPS:1,MUFFIN:1,LEMON:1,GRAVY:1};
+var FOOD={FISH:1,CHEESE:1,SOUP:1,TOAST:1,JAM:1,PIE:1,CHIPS:1,MUFFIN:1,LEMON:1,GRAVY:1,CHOCOLATE:1,CARROT:1};
 var TUBES=['brain-eyes','brain-ears','eyes-ears','eyes-nose','ears-mouth','nose-mouth','brain-mouth'];
 function garble(t){return t.replace(/A/g,'U');}
 function tubeKey(a,b){return TECHS.indexOf(a)<TECHS.indexOf(b)?a+'-'+b:b+'-'+a;}
@@ -483,18 +494,218 @@ G({d:28,icon:'⛈️',scene:'street',title:'Smarch weather',blurb:'Lousy, as usu
  base:{nose:'PUDDLES'},
  rounds:function(r){var a=mix(r,['THUNDER','RAIN','SUN','RAIN'],['THUNDER','RAIN','SUN'],6);return a.map(function(x){var th=x==='THUNDER',sky=th?pick(r,['RAIN','SUN']):x;return {show:th?'⛈️':(sky==='RAIN'?'🌧️':'☀️'),need:[th?['HIDE','THUNDER']:[sky==='RAIN'?'BROLLY':'SMILE',sky]],sense:{ears:th?'THUNDER':'QUIET',eyes:sky}};});},
  oops:function(v,k){if(k==='RUIN')return 'Brian was told “RUIN”. He took it personally. The body is now soaked and sulking.';if(v==='SMILE'&&k==='RAIN')return 'The body smiled at the rain. The rain did not smile back. The body is very wet.';},
- win:'Home, dry-ish. Smarch is over. April is under review.'})
+ win:'Home, dry-ish. Smarch is over. Smapril starts tomorrow.'})
 ];
 
 DAYS[2]=FISH;DAYS[8]=CHEESE;DAYS[16]=PIGEON;
+/* ---------- SMAPRIL ---------- */
+function waits(r,lo,hi,mk){var n=lo+Math.floor(r()*(hi-lo+1)),a=[];for(var i=0;i<n;i++)a.push(mk(i,r));return a;}
+var UNTIL_MEMO='New this month: <b>REPEAT UNTIL</b>. Before each go round, it checks what someone is holding. When the answer is yes, it skips to after its END and carries on with whatever comes next.';
+var SMAPRIL=[
+G({d:1,ik:'cushion',scene:'office',title:'Smapril Fool',blurb:'Somebody has been at the chairs.',
+ brief:['Happy Smapril. Somebody has left a cushion on my chair. It makes a noise. <b>REMOVE</b> the cushion, then <b>SIT</b> in the chair.','Look before you sit. That is the whole of management.'],
+ ps:['Audrey says she can hear giggling. Ignore Audrey.'],
+ palette:['LOOK','LISTEN','PASS','REMOVE','SIT'],blocked:{},tokens:[],par:6,
+ rounds:function(){return [{show:['@cushion','#CHAIR'],need:[['REMOVE','CUSHION'],['SIT','CHAIR']],sense:[{eyes:'CUSHION',ears:'GIGGLING'},{eyes:'CHAIR',ears:'SILENCE'}]}];},
+ oops:function(v,k){if(v==='SIT'&&k==='CUSHION')return 'The body sat on the cushion. It made the noise. Steve from Accounts laughed for eleven minutes.';if(k==='GIGGLING')return 'Brian acted on “GIGGLING”. It was Steve. It is always Steve.';},
+ win:'Cushion removed, chair sat in. Steve has been moved to a desk nearer the bins.'}),
+G({d:2,ik:'bottle',scene:'office',title:'Spring clean',blurb:'Five filthy windows.',
+ brief:['Spring cleaning. <b>WIPE</b> every <b>WINDOW</b>. There are five.'],
+ ps:['New trick: build the steps for one window, then drop <b>REPEAT</b> at the bottom of the clipboard. I’ll wrap the lot in it for you. Delegation.'],
+ palette:['LOOK','PASS','REPEAT','WIPE'],blocked:{},tokens:[],par:4,base:{ears:'SQUEAK',nose:'POLISH'},
+ rounds:function(){var a=[];for(var i=0;i<5;i++)a.push({show:'#WINDOW',need:[['WIPE','WINDOW']],sense:{eyes:'WINDOW'}});return a;},
+ win:'Five windows, sparkling. A pigeon flew into one. It was fine. It was Friday’s pigeon.'}),
+G({d:3,ik:'kettle',scene:'kitchen',title:'The kettle',blurb:'A watched pot.',
+ brief:['The kettle is on. While it is <b>BUBBLING</b>, <b>WAIT</b>. When it goes <b>CLICK</b>, <b>POUR</b>.',UNTIL_MEMO],
+ ps:['Tip: LISTEN once before the loop, and again at the end of each go round, so the check always has something fresh to look at.'],
+ palette:['LOOK','LISTEN','PASS','UNTIL','WAIT','POUR'],blocked:{},tokens:['BUBBLING','CLICK'],par:7,base:{eyes:'KETTLE',nose:'STEAM'},
+ rounds:function(r){return waits(r,2,4,function(){return {show:'@kettle',need:[['WAIT','BUBBLING']],sense:{ears:'BUBBLING'}};}).concat([{show:'@tea',need:[['POUR','CLICK']],sense:{ears:'CLICK'}}]);},
+ oops:function(v,k){if(v==='POUR'&&k==='BUBBLING')return 'The body poured before the click. The tea is lukewarm. The body is disappointed in itself.';},
+ win:'One cup of tea, poured at exactly the right moment. Brian takes all the credit.'}),
+G({d:4,ik:'rain',scene:'street',title:'Smapril showers',blurb:'Puddles all the way home.',
+ brief:['Walking home in the rain. <b>JUMP</b> every <b>PUDDLE</b>. When you reach the <b>DOOR</b>, <b>ENTER</b>.'],
+ ps:['Use REPEAT UNTIL. Iris will know when we are home.'],
+ palette:['LOOK','LISTEN','PASS','UNTIL','JUMP','ENTER'],blocked:{},tokens:['PUDDLE','DOOR'],par:7,base:{ears:'RAIN',nose:'WET DOG'},
+ rounds:function(r){return waits(r,2,4,function(){return {show:'@rain',need:[['JUMP','PUDDLE']],sense:{eyes:'PUDDLE'}};}).concat([{show:'@door',need:[['ENTER','DOOR']],sense:{eyes:'DOOR'}}]);},
+ oops:function(v,k){if(v==='ENTER'&&k==='PUDDLE')return 'The body tried to enter a puddle. It is now quite a lot wetter.';},
+ win:'Home, damp but triumphant. Every puddle jumped. Two of them were quite deep.'}),
+G({d:5,ik:'egg',scene:'garden',title:'Egg hunt',blurb:'Follow your nose.',
+ brief:['There is a chocolate egg in one of these bushes. Sniff each bush. While it only smells of <b>GRASS</b>, <b>MOVE</b> on. When Olly smells <b>CHOCOLATE</b>, look, and <b>GRAB</b> the <b>EGG</b>.'],
+ ps:['Bud is very excited about the chocolate. That is the problem.'],
+ palette:['LOOK','SNIFF','TASTE','PASS','UNTIL','MOVE','GRAB'],blocked:{},tokens:['GRASS','CHOCOLATE','EGG','BUSH'],par:9,base:{ears:'BIRDS'},
+ rounds:function(r){return waits(r,2,4,function(){return {show:'@flower',need:[['MOVE','GRASS']],sense:{nose:'GRASS',eyes:'BUSH'}};}).concat([{show:'@egg',need:[['GRAB','EGG']],sense:{nose:'CHOCOLATE',eyes:'EGG'}}]);},
+ oops:function(v,k){if(k==='BUSH')return 'Brian moved “BUSH”. It was a bush. Iris can see bushes. Olly needs to tell us what it smells of.';},
+ win:'One chocolate egg, retrieved. Bud has been told it is for later. Bud does not believe in later.'}),
+G({d:6,ik:'plant',scene:'garden',title:'Garden centre',blurb:'Water everything except the last one.',
+ brief:['Water the row of plants: <b>WATER</b> each one. The last pot is a <b>CACTUS</b>. Do not water it. <b>LEAVE</b> it.'],
+ ps:['Iris’s tube to me is blocked. Audrey is happy to pass things on. Mind the vowels.'],
+ palette:['LOOK','PASS','UNTIL','WATER','LEAVE'],blocked:{'brain-eyes':1},tokens:['FERN','ROSE','IVY','CACTUS'],par:10,base:{ears:'SPRINKLER',nose:'COMPOST'},
+ rounds:function(r){return waits(r,2,4,function(i,r){var p=pick(r,['FERN','ROSE','IVY']);return {show:'@plant',need:[['WATER',p]],sense:{eyes:p}};}).concat([{show:'#CACTUS',need:[['LEAVE','CACTUS']],sense:{eyes:'CACTUS'}}]);},
+ oops:function(v,k){if(k==='CUCTUS')return 'Brian was told “CUCTUS”. He has gone looking for one. The cactus has been watered by a well-meaning customer instead.';if(v==='WATER'&&k==='CACTUS')return 'The body watered the cactus. The cactus did not want that. The cactus is sulking.';},
+ win:'Every plant watered, the cactus left alone. The cactus would like it known that it is fine. It is not fine.'}),
+G({d:7,ik:'bowl',scene:'kitchen',title:'Gravy',blurb:'Season to taste.',
+ brief:['Sunday gravy. Taste it. While it is <b>BLAND</b>, <b>SALT</b> it. When it is <b>SALTY</b>, <b>SERVE</b> it.'],
+ ps:['Bud’s pipe to me is open. Bud has promised to behave. Gravy is technically food, but it is not on the memo.'],
+ palette:['LOOK','TASTE','PASS','UNTIL','SALT','SERVE'],blocked:{},tokens:['BLAND','SALTY'],par:7,base:{eyes:'POT',nose:'ONIONS'},
+ rounds:function(r){return waits(r,2,4,function(){return {show:'@bowl',need:[['SALT','BLAND']],sense:{mouth:'BLAND'}};}).concat([{show:'@bowl',need:[['SERVE','SALTY']],sense:{mouth:'SALTY'}}]);},
+ oops:function(v,k){if(v==='SERVE'&&k==='BLAND')return 'The body served bland gravy. Mum said it was lovely, in the voice that means it was not.';if(v==='SALT'&&k==='SALTY')return 'The body salted salty gravy. It is now a geological feature.';},
+ win:'Gravy perfect. Mum asked who made it. Brian said he did. Bud made it.'}),
+G({d:8,ik:'letter',scene:'home',title:'The post',blurb:'Bills, mostly.',
+ brief:['The post has arrived. Go through the pile. <b>READ</b> each <b>LETTER</b>. Each <b>BILL</b> goes in the <b>BIN</b>. When you can see the <b>MAT</b>, <b>SWEEP</b> it.'],
+ ps:['You can put an IF inside a REPEAT UNTIL. I recommend it. I invented it.'],
+ palette:['LOOK','PASS','IF','UNTIL','READ','BIN','SWEEP'],blocked:{},tokens:['LETTER','BILL','MAT'],par:10,base:{ears:'LETTERBOX',nose:'PAPER'},
+ rounds:function(r){return mix(r,['LETTER','BILL'],['LETTER','BILL'],3+Math.floor(r()*3)).map(function(it){return {show:it==='BILL'?'#BILL':'@letter',need:[[it==='BILL'?'BIN':'READ',it]],sense:{eyes:it}};}).concat([{show:'#DOORMAT',need:[['SWEEP','MAT']],sense:{eyes:'MAT'}}]);},
+ oops:function(v,k){if(v==='READ'&&k==='BILL')return 'The body read the bill. All of it. The body needs a sit down.';if(v==='BIN'&&k==='LETTER')return 'The body binned a letter. It was from Nan. It had a fiver in it.';},
+ win:'Letters read, bills binned, mat swept. The fiver from Nan has been spent on biscuits.'}),
+G({d:9,ik:'bus',scene:'street',title:'Bus stop',blurb:'Waiting for the 42.',
+ brief:['Waiting for the number <b>42</b>. <b>WAVE</b> at every other bus so it knows we are not getting on. When the 42 comes, <b>BOARD</b> it.'],
+ ps:['Iris’s tube to me AND Audrey’s tube to me are blocked. The long way round it is.'],
+ palette:['LOOK','LISTEN','PASS','UNTIL','WAVE','BOARD'],blocked:{'brain-eyes':1,'brain-ears':1},tokens:['7','12','33','42'],par:11,base:{ears:'ENGINE',nose:'DIESEL'},
+ rounds:function(r){return waits(r,2,4,function(i,r){var b=pick(r,['7','12','33']);return {show:'#'+b,need:[['WAVE',b]],sense:{eyes:b}};}).concat([{show:'#42',need:[['BOARD','42']],sense:{eyes:'42'}}]);},
+ oops:function(v,k){if(v==='BOARD')return 'The body got on the '+k+'. It goes to the industrial estate. Nobody wants to go to the industrial estate.';},
+ win:'On the 42 at last. The driver said “what’s with all the waving”. Brian has no regrets.'}),
+G({d:10,ik:'tea',scene:'office',title:'Hiccups',blurb:'Glass of water, quick.',
+ brief:['The body has hiccups. Every time Audrey hears a <b>HIC</b>, <b>DRINK</b>. When it goes <b>SILENCE</b>, <b>BREATHE</b>.'],
+ ps:['Audrey’s tube to me is blocked. Iris has agreed to help, for a fee.'],
+ palette:['LOOK','LISTEN','PASS','UNTIL','DRINK','BREATHE'],blocked:{'brain-ears':1},tokens:['HIC','SILENCE'],par:9,base:{eyes:'GLASS',nose:'WATER'},
+ rounds:function(r){return waits(r,2,4,function(){return {show:'@tea',need:[['DRINK','HIC']],sense:{ears:'HIC'}};}).concat([{show:'#PHEW',need:[['BREATHE','SILENCE']],sense:{ears:'SILENCE'}}]);},
+ win:'Hiccups gone. The body drank four glasses of water. It now needs the loo.'}),
+G({d:11,ik:'fish',scene:'garden',title:'Fishing',blurb:'Patience, then lunch.',
+ brief:['Fishing. While the float is <b>STILL</b>, <b>WAIT</b>. When it is <b>BOBBING</b>, <b>REEL</b> it in. Then look at what you caught, and <b>EAT</b> it.'],
+ ps:['Bud is not to touch the fish until it has been reeled in. Bud is not to touch the fish at all, ideally.'],
+ palette:['LOOK','TASTE','PASS','UNTIL','WAIT','REEL','EAT'],blocked:{},tokens:['STILL','BOBBING','FISH'],par:10,base:{ears:'LAPPING',nose:'POND'},
+ rounds:function(r){return waits(r,2,4,function(){return {show:'#STILL',need:[['WAIT','STILL']],sense:{eyes:'STILL'}};}).concat([{show:['#BOBBING','@fish'],need:[['REEL','BOBBING'],['EAT','FISH']],sense:[{eyes:'BOBBING'},{eyes:'FISH'}]}]);},
+ oops:function(v,k){if(v==='REEL'&&k==='STILL')return 'The body reeled in too early. It caught a boot. It ate the boot. It did not enjoy the boot.';},
+ win:'One fish, caught and eaten. The fish did not ring, which Brian found disappointing.'}),
+G({d:12,ik:'cake',scene:'kitchen',title:'Pancake day',blurb:'Flip until golden. Mind the smoke.',
+ brief:['Pancakes. While the pancake is <b>PALE</b>, <b>COOK</b> it. If Olly smells <b>SMOKE</b> at any point, <b>FAN</b> it first. When it is <b>GOLDEN</b>, <b>SERVE</b> it.'],
+ ps:['Olly has no tube to me. Bud has a pipe. Smoke is not food, so Bud will pass it on. Eventually.'],
+ palette:['LOOK','SNIFF','PASS','IF','UNTIL','FAN','COOK','SERVE'],blocked:{},tokens:['PALE','GOLDEN','SMOKE','BUTTER'],par:12,base:{ears:'SIZZLE'},
+ rounds:function(r){var n=3+Math.floor(r()*2),sm=shuffle([1,0].concat(waits(r,n-2,n-2,function(){return r()<.5?1:0;})),r),a=sm.map(function(x){return x?{show:'@smoke',need:[['FAN','SMOKE'],['COOK','PALE']],sense:[{eyes:'PALE',nose:'SMOKE'},{eyes:'PALE',nose:'BUTTER'}]}:{show:'@cake',need:[['COOK','PALE']],sense:{eyes:'PALE',nose:'BUTTER'}};});a.push({show:'@cake',need:[['SERVE','GOLDEN']],sense:{eyes:'GOLDEN',nose:'BUTTER'}});return a;},
+ oops:function(v,k){if(v==='COOK'&&k==='PALE')return 'The body cooked on through the smoke. The smoke alarm went off. The neighbours came round. They stayed for pancakes.';if(v==='SERVE'&&k==='PALE')return 'The body served a raw pancake. It was more of a puddle.';},
+ win:'A golden pancake. Brian flipped it himself. It landed on the ceiling. He calls that a success.'}),
+G({d:13,ik:'box',scene:'shop',title:'Car boot sale',blurb:'Haggle until five.',
+ brief:['There is a lamp at the car boot sale. Listen to the price. While it is too much, <b>HAGGLE</b>. When the man says <b>FIVE</b>, <b>BUY</b> it.'],
+ ps:['Audrey’s tube to me is blocked. Prices go the long way round.'],
+ palette:['LOOK','LISTEN','PASS','UNTIL','HAGGLE','BUY'],blocked:{'brain-ears':1},tokens:['TWENTY','TEN','FIVE'],par:9,base:{eyes:'LAMP',nose:'MUD'},
+ rounds:function(r){var ps=['TWENTY','TEN'],n=2+Math.floor(r()*2),a=[];for(var i=0;i<n;i++)a.push({show:'@box',need:[['HAGGLE',ps[Math.min(i,1)]]],sense:{ears:ps[Math.min(i,1)]}});a.push({show:'@box',need:[['BUY','FIVE']],sense:{ears:'FIVE'}});return a;},
+ oops:function(v,k){if(v==='BUY')return 'The body paid '+k.toLowerCase()+' pounds for a lamp. It does not work. It is now the most expensive broken lamp in the county.';},
+ win:'Lamp bought for a fiver. It is the lamp from the opening titles. It always was.'}),
+G({d:14,ik:'duck',scene:'home',title:'Bath time',blurb:'Fill it, stop it, soak.',
+ brief:['Running a bath. While the water is <b>LOW</b>, <b>WAIT</b>. When it is <b>FULL</b>, <b>STOP</b> the tap. Then look at the <b>BATH</b> and <b>SOAK</b> in it.'],
+ ps:['Iris’s tube to me is blocked. Audrey is fine for most words. Most.'],
+ palette:['LOOK','LISTEN','PASS','UNTIL','WAIT','STOP','SOAK'],blocked:{'brain-eyes':1},tokens:['LOW','FULL','BATH'],par:14,base:{ears:'RUNNING WATER',nose:'BUBBLES'},
+ rounds:function(r){return waits(r,2,4,function(){return {show:'#LOW',need:[['WAIT','LOW']],sense:{eyes:'LOW'}};}).concat([{show:['#FULL','@duck'],need:[['STOP','FULL'],['SOAK','BATH']],sense:[{eyes:'FULL'},{eyes:'BATH'}]}]);},
+ oops:function(v,k){if(k==='BUTH')return 'Brian was told “BUTH”. He does not know what a buth is. The body is standing next to a full bath, fully dressed, confused.';if(v==='STOP'&&k==='LOW')return 'The body stopped the tap too early. It is a very shallow bath. More of a paddle.';},
+ win:'A full bath, a long soak. The rubber duck has been promoted to Head of Bathroom.'}),
+G({d:15,ik:'lightRed',scene:'street',title:'Three crossings',blurb:'Wait for green. Three times.',nodots:1,
+ brief:['Three roads to cross. At each one: while the light is <b>RED</b>, <b>WAIT</b>. When it is <b>GREEN</b>, <b>WALK</b>. Then on to the next road.'],
+ ps:['You can put a REPEAT UNTIL inside a plain REPEAT. Loops in loops. I dream about it.'],
+ palette:['LOOK','PASS','REPEAT','UNTIL','WAIT','WALK'],blocked:{},tokens:['RED','GREEN'],par:8,base:{ears:'TRAFFIC',nose:'EXHAUST'},
+ rounds:function(r){var a=[];for(var k=0;k<3;k++){a=a.concat(waits(r,1,3,function(){return {show:'@lightRed',need:[['WAIT','RED']],sense:{eyes:'RED'}};}));a.push({show:'@lightGreen',need:[['WALK','GREEN']],sense:{eyes:'GREEN'}});}return a;},
+ oops:function(v,k){if(v==='WALK'&&k==='RED')return 'The body walked on red. A cyclist had a lot to say about it.';},
+ win:'Three roads, all crossed safely. The lollipop lady has given the body a second sticker. It has started a collection.'}),
+G({d:16,ik:'sock',scene:'garden',title:'Washing line',blurb:'Peg it out. Pair the socks.',
+ brief:['Hang out the washing. Each <b>SHIRT</b> or <b>TOWEL</b>: <b>PEG</b> it. Each <b>SOCK</b>: <b>PAIR</b> it. When the basket is <b>EMPTY</b>, <b>REST</b>.'],
+ ps:['IF someone HAS <b>ANYTHING</b> is true whatever they are holding. It is my favourite IF.'],
+ palette:['LOOK','PASS','IF','UNTIL','PEG','PAIR','REST'],blocked:{},tokens:['SHIRT','SOCK','TOWEL','EMPTY'],par:10,base:{ears:'BIRDS',nose:'SOAP POWDER'},
+ rounds:function(r){return mix(r,['SOCK','SHIRT'],['SHIRT','SOCK','TOWEL'],3+Math.floor(r()*3)).map(function(it){return {show:it==='SOCK'?'@sock':'#'+it,need:[[it==='SOCK'?'PAIR':'PEG',it]],sense:{eyes:it}};}).concat([{show:'#EMPTY',need:[['REST','EMPTY']],sense:{eyes:'EMPTY'}}]);},
+ oops:function(v,k){if(v==='PEG'&&k==='SOCK')return 'The body pegged out a single sock. It has no partner. It flaps there alone. Nobody talks about it.';},
+ win:'Washing out, socks paired. One sock left over, as is the law.'}),
+G({d:17,ik:'chest',scene:'garden',title:'Treasure map',blurb:'Ten paces, dig, repeat.',nodots:1,
+ brief:['A treasure map with three Xs. Walk across the <b>SAND</b>: <b>STEP</b> each time. When Iris sees an <b>X</b>, <b>DIG</b>. Then walk on to the next one.'],
+ ps:['Iris’s tube to me is blocked. Audrey hears every A as a U. Sand is a word with an A in it.'],
+ palette:['LOOK','PASS','REPEAT','UNTIL','STEP','DIG'],blocked:{'brain-eyes':1},tokens:['SAND','X'],par:11,base:{ears:'SEAGULLS',nose:'SEA'},
+ rounds:function(r){var a=[];for(var k=0;k<3;k++){a=a.concat(waits(r,1,3,function(){return {show:'#SAND',need:[['STEP','SAND']],sense:{eyes:'SAND'}};}));a.push({show:'@chest',need:[['DIG','X']],sense:{eyes:'X'}});}return a;},
+ oops:function(v,k){if(k==='SUND')return 'Brian was told to step on “SUND”. There is no such thing as sund. The body is standing very still on a beach, worried.';},
+ win:'Three chests dug up. Two contained sand. One contained a note from Steve saying “Smapril Fool”.'}),
+G({d:18,ik:'newspaper',scene:'stage',title:'Bingo',blurb:'Eyes down for seven.',
+ brief:['Bingo night. We only need a <b>SEVEN</b>. Every other number Audrey hears, <b>DAUB</b> it anyway, to look busy. When she hears SEVEN, look at the card and <b>SAY</b> what it says.'],
+ ps:['Audrey’s tube to me is blocked. The caller’s name is Barry. He is not a nice man.'],
+ palette:['LOOK','LISTEN','PASS','UNTIL','DAUB','SAY'],blocked:{'brain-ears':1},tokens:['SIX','SEVEN','NINE','BINGO'],par:9,base:{eyes:'CARD',nose:'SHERRY'},
+ rounds:function(r){return waits(r,3,5,function(i,r){var n=pick(r,['ONE','TWO','SIX','TEN','NINE','FOUR']);return {show:'#'+n,need:[['DAUB',n]],sense:{ears:n}};}).concat([{show:'#BINGO',need:[['SAY','BINGO']],sense:{ears:'SEVEN',eyes:'BINGO'}}]);},
+ oops:function(v,k){if(v==='SAY'&&k!=='BINGO')return 'The body shouted “'+k+'”. Barry stared. Everybody stared. You do not shout numbers at Barry.';},
+ win:'BINGO. The prize is a tin of travel sweets. Bud has already had the red ones.'}),
+G({d:19,ik:'disco',scene:'stage',title:'Musical statues',blurb:'Dance, freeze, again.',nodots:1,
+ brief:['Musical statues. Three songs. While Audrey hears <b>MUSIC</b>, <b>DANCE</b>. When it goes <b>HUSH</b>, <b>FREEZE</b>. Then the next song starts.'],
+ ps:['Audrey’s tube to me is blocked. Bud’s pipe is open. Music is not food, whatever Bud says.'],
+ palette:['LOOK','LISTEN','PASS','REPEAT','UNTIL','DANCE','FREEZE'],blocked:{'brain-ears':1},tokens:['MUSIC','HUSH'],par:10,base:{eyes:'DANCE FLOOR',nose:'SQUASH'},
+ rounds:function(r){var a=[];for(var k=0;k<3;k++){a=a.concat(waits(r,2,3,function(){return {show:'@disco',need:[['DANCE','MUSIC']],sense:{ears:'MUSIC'}};}));a.push({show:'@hush',need:[['FREEZE','HUSH']],sense:{ears:'HUSH'}});}return a;},
+ oops:function(v,k){if(v==='DANCE'&&k==='HUSH')return 'The body kept dancing after the music stopped. It was out. It was out in front of everyone.';},
+ win:'Last one standing. The prize is a bag of party rings. Bud is negotiating.'}),
+G({d:20,ik:'carrot',scene:'garden',title:'Allotment',blurb:'Weeds out, carrots in. Mind the worm.',
+ brief:['Down the allotment. Work along the row. A <b>WEED</b>: <b>PULL</b> it. A <b>CARROT</b>: <b>PICK</b> it. When Iris sees the <b>WORM</b>, <b>SCREAM</b>.'],
+ ps:['Carrots are food. You know what that means.'],
+ palette:['LOOK','SNIFF','PASS','IF','UNTIL','PULL','PICK','SCREAM'],blocked:{},tokens:['WEED','CARROT','WORM'],par:10,base:{ears:'ROBIN',nose:'SOIL'},
+ rounds:function(r){return mix(r,['WEED','CARROT'],['WEED','CARROT'],3+Math.floor(r()*3)).map(function(it){return {show:it==='CARROT'?'@carrot':'#WEED',need:[[it==='CARROT'?'PICK':'PULL',it]],sense:{eyes:it}};}).concat([{show:'#WORM',need:[['SCREAM','WORM']],sense:{eyes:'WORM'}}]);},
+ oops:function(v,k){if(v==='PULL'&&k==='CARROT')return 'The body pulled up a carrot and threw it on the weed pile. The allotment committee have been informed.';if(v==='PICK'&&k==='WEED')return 'The body carefully harvested a weed. It is going to make soup with it. It should not.';},
+ win:'Row done. The scream could be heard three allotments away. The worm was fine.'}),
+G({d:21,ik:'sheep',scene:'night',title:'Counting sheep',blurb:'Count until the snoring starts.',
+ brief:['Can’t sleep. Count sheep: <b>SAY</b> the number on each sheep. When Audrey hears <b>SNORE</b>, the body is asleep: <b>SLEEP</b>.'],
+ ps:['Audrey’s tube to me is blocked. She can hear the body snoring. Nobody else can. That is how snoring works.'],
+ palette:['LOOK','LISTEN','PASS','UNTIL','SAY','SLEEP'],blocked:{'brain-ears':1},tokens:['BAA','SNORE'],par:9,base:{nose:'PILLOW'},
+ rounds:function(r){var w=['ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN'],n=3+Math.floor(r()*3),a=[];for(var i=0;i<n;i++)a.push({show:'@sheep',need:[['SAY',w[i]]],sense:{eyes:w[i],ears:'BAA'}});a.push({show:'#ZZZ',need:[['SLEEP','SNORE']],sense:{ears:'SNORE',eyes:'DARK'}});return a;},
+ win:'Asleep by sheep number '+'six. Brian counted the last one himself, out loud, at 3am.'}),
+G({d:22,ik:'tooth',scene:'office',title:'Dentist',blurb:'Open wide.',
+ brief:['At the dentist. Do what she says: <b>OPEN</b> means <b>OPEN</b>, <b>RINSE</b> means <b>RINSE</b>. When she says <b>DONE</b>, <b>THANK</b> her.'],
+ ps:['Audrey’s tube to me is blocked. Bud is not to bite anyone.'],
+ palette:['LOOK','LISTEN','PASS','IF','UNTIL','OPEN','RINSE','THANK'],blocked:{'brain-ears':1},tokens:['OPEN','RINSE','DONE'],par:12,base:{eyes:'LAMP',nose:'MINT'},
+ rounds:function(r){return mix(r,['OPEN','RINSE'],['OPEN','RINSE'],3+Math.floor(r()*3)).map(function(it){return {show:'@tooth',need:[[it,it]],sense:{ears:it}};}).concat([{show:'#DONE',need:[['THANK','DONE']],sense:{ears:'DONE'}}]);},
+ oops:function(v,k){if(v==='RINSE'&&k==='OPEN')return 'The body rinsed with its mouth shut. It went everywhere. The dentist has a new tabard now.';if(v==='OPEN'&&k==='RINSE')return 'The body opened wide when it should have rinsed. A lot of pink water came out. On the dentist.';},
+ win:'No fillings. A sticker. The body is thirty-eight years old and very pleased about the sticker.'}),
+G({d:23,ik:'box',scene:'factory',title:'Quality control',blurb:'Sniff every parcel until the belt stops.',
+ brief:['Quality control. Sniff each parcel as it comes. <b>FINE</b>: <b>STAMP</b> it. <b>BURNT</b>: <b>BIN</b> it. Keep going until Audrey hears the belt go <b>SILENCE</b>, then <b>RELAX</b>.'],
+ ps:['Olly has no tube to me. Bud does. Neither word is food.'],
+ palette:['LISTEN','SNIFF','PASS','IF','UNTIL','STAMP','BIN','RELAX'],blocked:{},tokens:['FINE','BURNT','WHIRRING','SILENCE'],par:12,base:{eyes:'BELT'},
+ rounds:function(r){return mix(r,['FINE','BURNT'],['FINE','BURNT','FINE'],3+Math.floor(r()*3)).map(function(it){return {show:'@box',need:[[it==='FINE'?'STAMP':'BIN',it]],sense:{nose:it,ears:'WHIRRING'}};}).concat([{show:'#HOME TIME',need:[['RELAX','SILENCE']],sense:{ears:'SILENCE',nose:'CARDBOARD'}}]);},
+ oops:function(v,k){if(v==='STAMP'&&k==='BURNT')return 'The body stamped a burnt parcel as fine. It has been sent to a customer in Leeds. Leeds will be in touch.';},
+ win:'Belt stopped, everything checked. Brian has given himself employee of the month.'}),
+G({d:24,ik:'peek',scene:'home',title:'Lost cat',blurb:'Room to room until it meows.',nodots:1,
+ brief:['The cat is hiding. Go room by room. Look at the room. If Audrey hears nothing, <b>NEXT</b> that room. When she hears <b>MEOW</b>, you have <b>FOUND</b> it: say which room.'],
+ ps:['The cat is called Professor. Professor does not want to be found.'],
+ palette:['LOOK','LISTEN','SNIFF','PASS','UNTIL','NEXT','FOUND'],blocked:{},tokens:['SILENCE','MEOW'],par:9,base:{nose:'CAT'},
+ rounds:function(r){var p=shuffle(['KITCHEN','BEDROOM','LOFT','SHED','CELLAR','HALL'],r),k=2+Math.floor(r()*3),a=[];for(var i=0;i<=k;i++)a.push({show:'#'+p[i],need:[[i===k?'FOUND':'NEXT',p[i]]],sense:{eyes:p[i],ears:i===k?'MEOW':'SILENCE'}});return a;},
+ oops:function(v,k){if(v==='FOUND')return 'The body announced it had found the cat in the '+k+'. It had not. Professor watched from the next room, unimpressed.';},
+ win:'Found Professor. Professor had been there the whole time. Professor is a cat.'}),
+G({d:25,ik:'pigeon',scene:'stage',title:'The pigeon returns',blurb:'Quiz night. Again. Until the end.',nodots:1,
+ brief:['The quiz pigeon is back. Each round a sign says <b>NOSE</b>, <b>EARS</b> or <b>TONGUE</b>: examine the box that way and <b>SAY</b> what is inside. When the sign says <b>END</b>, <b>BOW</b>.'],
+ ps:['Bud’s pipe to me is blocked again. The pigeon has asked for it to be.'],
+ palette:['LOOK','LISTEN','SNIFF','TASTE','PASS','IF','UNTIL','SAY','BOW'],blocked:{'brain-mouth':1},tokens:['NOSE','EARS','TONGUE','END'],par:17,base:{},
+ rounds:function(r){var pool={NOSE:['ROSE','SMOKE','GRASS'],EARS:['MOO','TUBA','BELLS'],TONGUE:['PEPPER','MINT','CHALK']},ks=mix(r,['NOSE','EARS','TONGUE'],['NOSE','EARS','TONGUE'],3+Math.floor(r()*3));
+  return ks.map(function(k){var ans=pick(r,pool[k]);return {show:'#'+k,need:[['SAY',ans]],sense:{eyes:k,nose:k==='NOSE'?ans:'CARDBOARD',ears:k==='EARS'?ans:'SILENCE',mouth:k==='TONGUE'?ans:'CARDBOARD'}};}).concat([{show:'@pigeon',need:[['BOW','END']],sense:{eyes:'END'}}]);},
+ oops:function(v,k){if(k==='NOSE'||k==='EARS'||k==='TONGUE')return 'The body read the sign out loud again. The pigeon put its head in its wings.';if(v==='BOW')return 'The body bowed in the middle of the quiz. The pigeon did not know where to look.';},
+ win:'A perfect score. The pigeon has given the body its own small box. It is empty. It is the thought.'}),
+G({d:26,ik:'party',scene:'garden',title:'Coconut shy',blurb:'Throw until clonk.',
+ brief:['The spring fair. Throw at the coconut. While Audrey hears <b>MISS</b>, <b>THROW</b> again. When she hears <b>CLONK</b>, look at the prize and <b>CLAIM</b> it.'],
+ ps:['Audrey’s tube to me is blocked.'],
+ palette:['LOOK','LISTEN','PASS','UNTIL','THROW','CLAIM'],blocked:{'brain-ears':1},tokens:['MISS','CLONK','COCONUT'],par:9,base:{eyes:'STALL',nose:'CANDYFLOSS'},
+ rounds:function(r){return waits(r,2,4,function(){return {show:'#MISS',need:[['THROW','MISS']],sense:{ears:'MISS'}};}).concat([{show:'#COCONUT',need:[['CLAIM','COCONUT']],sense:{ears:'CLONK',eyes:'COCONUT'}}]);},
+ oops:function(v,k){if(v==='CLAIM'&&k==='COCONUT'.replace(/A/g,'U'))return 'The body asked for its “COCONUT” with a U. The stall holder pretended not to understand. Kept the coconut.';},
+ win:'One coconut, won fair and square. Nobody in the head knows how to open it.'}),
+G({d:27,ik:'mic',scene:'stage',title:'The orchestra',blurb:'Play until the baton drops. Three times.',nodots:1,
+ brief:['The body is in an orchestra. Three pieces. In each: while the conductor’s baton is <b>UP</b>, listen for the note and <b>PLAY</b> it. When the baton is <b>DOWN</b>, <b>BOW</b>.'],
+ ps:['Audrey’s tube to me is blocked. FA and LA have an A in them. Plan accordingly.'],
+ palette:['LOOK','LISTEN','PASS','REPEAT','UNTIL','PLAY','BOW'],blocked:{'brain-ears':1},tokens:['UP','DOWN'],par:10,base:{nose:'ROSIN'},
+ rounds:function(r){var a=[];for(var k=0;k<3;k++){a=a.concat(waits(r,2,3,function(i,r){var n=pick(r,['DO','RE','MI','FA','SO','LA','TI']);return {show:'#'+n,need:[['PLAY',n]],sense:{eyes:'UP',ears:n}};}));a.push({show:'#BOW',need:[['BOW','DOWN']],sense:{eyes:'DOWN',ears:'APPLAUSE'}});}return a;},
+ win:'Three pieces, three bows. A standing ovation. Brian conducted from his desk throughout, uninvited.'}),
+G({d:28,ik:'storm',scene:'garden',title:'Picnic',blurb:'Eat until it rains. It will rain.',
+ brief:['The last day of Smapril. A picnic. Sniff each thing in the basket: <b>BREAD</b> or <b>FRUIT</b>, <b>EAT</b> it. <b>ANTS</b>, <b>SHOO</b> them. Keep going until Audrey hears <b>RAIN</b>. Then look at the <b>BASKET</b> and <b>PACK</b> it.'],
+ ps:['Iris’s tube to me is blocked. Audrey cannot spell basket. Bud is under strict instructions.','This is everything. Loops, ifs, routes. I taught you all of it. Again.'],
+ palette:['LOOK','LISTEN','SNIFF','PASS','IF','UNTIL','SHOO','EAT','PACK'],blocked:{'brain-eyes':1},tokens:['BREAD','FRUIT','ANTS','RAIN'],par:15,base:{},
+ rounds:function(r){return mix(r,['ANTS','BREAD'],['BREAD','FRUIT','ANTS'],3+Math.floor(r()*3)).map(function(it){return {show:it==='ANTS'?'#ANTS':'@pie',need:[[it==='ANTS'?'SHOO':'EAT',it]],sense:{nose:it,ears:'CHIRP',eyes:'BLANKET'}};}).concat([{show:'@rain',need:[['PACK','BASKET']],sense:{ears:'RAIN',eyes:'BASKET',nose:'WET GRASS'}}]);},
+ oops:function(v,k){if(k==='BUSKET')return 'Brian was told to pack the “BUSKET”. He is still looking for it. It is now raining on everything.';if(v==='EAT'&&k==='ANTS')return 'The body ate the ants. Protein, technically. Nobody is happy.';},
+ win:'Packed up just in time. Smarch and Smapril, both done. Smay is under review.'})
+];
+
+DAYS=DAYS.concat(SMAPRIL);
 var WD=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-DAYS.forEach(function(l){l.wd=WD[(l.d-1)%7];l.re=l.re||l.title;});
+DAYS.forEach(function(l,i){l.wd=WD[(l.d-1)%7];l.re=l.re||l.title;l.mon=i<28?'Smarch':'Smapril';l.idx=i;});
 var LEVELS=DAYS;
 
 
 /* rows: [{op,a,b}]  op: LOOK LISTEN SNIFF TASTE PASS IF REPEAT END GRAB SAY EAT WASH */
-function link(rows){var m=[],st=[];for(var i=0;i<rows.length;i++){var o=rows[i].op;if(o==='IF'||o==='REPEAT')st.push(i);else if(o==='END'){var j=st.pop();if(j===undefined)return null;m[i]=j;m[j]=i;}}return st.length?null:m;}
-function check(rows){for(var i=0;i<rows.length;i++){var r=rows[i];if((r.op==='PASS'||r.op==='IF')&&(!r.a||!r.b))return i;}return -1;}
+function link(rows){var m=[],st=[];for(var i=0;i<rows.length;i++){var o=rows[i].op;if(o==='IF'||o==='REPEAT'||o==='UNTIL')st.push(i);else if(o==='END'){var j=st.pop();if(j===undefined)return null;m[i]=j;m[j]=i;}}return st.length?null:m;}
+function check(rows){for(var i=0;i<rows.length;i++){var r=rows[i];if((r.op==='PASS'||r.op==='IF'||r.op==='UNTIL')&&(!r.a||!r.b))return i;}return -1;}
 function count(rows){var n=0;for(var i=0;i<rows.length;i++)if(rows[i].op!=='END')n++;return n;}
 function preview(level,seed,ci){return JSON.parse(JSON.stringify(level.make(seed,ci||0).s));}
 
@@ -511,7 +722,7 @@ function createRun(level,rows,seed,ci){
    if(st.pc>=rows.length)return fail(-1,'ended','The procedure finished. The job did not. The body is just standing there.'+hold);
    var i=st.pc,r=rows[i],o=r.op;
    if(o==='REPEAT'){st.pc++;continue;}
-   if(o==='END'){var j=m[i];st.pc=(j!==undefined&&rows[j].op==='REPEAT')?j+1:i+1;continue;}
+   if(o==='END'){var j=m[i];st.pc=(j!==undefined&&rows[j].op==='REPEAT')?j+1:(j!==undefined&&rows[j].op==='UNTIL')?j:i+1;continue;}
    st.steps++;
    if(SENSES[o]){
     var who=SENSES[o],tok=world.sense(who),had=st.hands[who],ate=false;
@@ -533,9 +744,9 @@ function createRun(level,rows,seed,ci){
     st.pc++;
     return {row:i,ev:{t:'pass',from:a,to:b,token:t0,got:got,garbled:gar,eaten:eat,had:had2},status:'run',view:view()};
    }
-   if(o==='IF'){
+   if(o==='IF'||o==='UNTIL'){
     var h=st.hands[r.a],yes=r.b==='ANYTHING'?h!=null:r.b==='NOTHING'?h==null:h===r.b;
-    st.pc=yes?i+1:(m[i]!==undefined?m[i]+1:i+1);
+    if(o==='UNTIL')st.pc=yes?(m[i]!==undefined?m[i]+1:i+1):i+1;else st.pc=yes?i+1:(m[i]!==undefined?m[i]+1:i+1);
     return {row:i,ev:{t:'if',who:r.a,want:r.b,yes:yes,has:h},status:'run',view:view()};
    }
    var k=st.hands.brain;
@@ -671,9 +882,9 @@ var AU=(function(){
  return {rebuild:rebuild,init:init,fx:fx,say:say,toggle:toggle,pref:function(){return pref;},ready:function(){return !!ac;}};
 })();
 
-function z28(v){var a=[];for(var i=0;i<28;i++)a.push(v);return a;}
+function z28(v){var a=[];for(var i=0;i<56;i++)a.push(v);return a;}
 var KEY='head-office',SAVE={done:z28(0),best:z28(0),prog:z28(null),fresh:null};
-try{var sv=JSON.parse(localStorage.getItem(KEY));if(sv&&sv.done&&sv.best&&sv.prog){if(sv.done.length===3){[2,8,16].forEach(function(t,k){SAVE.done[t]=sv.done[k];SAVE.best[t]=sv.best[k];SAVE.prog[t]=sv.prog[k];});}else if(sv.done.length===28){SAVE.done=sv.done;SAVE.best=sv.best;SAVE.prog=sv.prog;}SAVE.unlocked=!!sv.unlocked;}}catch(e){}
+try{var sv=JSON.parse(localStorage.getItem(KEY));if(sv&&sv.done&&sv.best&&sv.prog){if(sv.done.length===3){[2,8,16].forEach(function(t,k){SAVE.done[t]=sv.done[k];SAVE.best[t]=sv.best[k];SAVE.prog[t]=sv.prog[k];});}else if(sv.done.length>=28){for(var q=0;q<sv.done.length&&q<56;q++){SAVE.done[q]=sv.done[q];SAVE.best[q]=sv.best[q];SAVE.prog[q]=sv.prog[q];}}SAVE.unlocked=!!sv.unlocked;}}catch(e){}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify({done:SAVE.done,best:SAVE.best,prog:SAVE.prog,unlocked:SAVE.unlocked?1:0}));}catch(e){}}
 
 /* ---------- state ---------- */
@@ -1201,12 +1412,12 @@ function begin(){closePicker();
   var b=HO.check(S.rows);if(b>=0){var r=S.rows[b];setTimeout(function(){openPicker(b,r.a?'b':'a');},0);return false;}
   S.mode='run';S.ci=0;S.bad=-1;S.busy=false;S.run=HO.createRun(L[S.li],S.rows,S.seed,0);resetScene();renderRows();work.classList.add('locked');return true;}
 function stop(){TL=[];S.mode='edit';S.busy=false;S.auto=false;S.run=null;S.seed=newSeed();resetScene();setCur(-1);work.classList.remove('locked');hideSheet();updateCtrl();}
-function updateCtrl(){var run=S.mode==='run';bRun.textContent=run&&S.auto?'Pause':'Run';bRun.disabled=S.mode==='done';bStep.disabled=S.mode==='done'||(run&&(S.auto||S.busy));bStop.disabled=S.mode==='edit';bClr.disabled=S.mode!=='edit';}
+function updateCtrl(){if(typeof placeIns==='function')setTimeout(placeIns,0);var run=S.mode==='run';bRun.textContent=run&&S.auto?'Pause':'Run';bRun.disabled=S.mode==='done';bStep.disabled=S.mode==='done'||(run&&(S.auto||S.busy));bStop.disabled=S.mode==='edit';bClr.disabled=S.mode!=='edit';}
 bRun.onclick=function(){AU.init();AU.fx('tap');closeMenu();TAP.from=null;setTimeout(function(){if(typeof tutCheck==='function')tutCheck();},50);if(S.mode==='edit'){if(!begin())return;S.auto=true;next();}else if(S.mode==='run'){S.auto=!S.auto;if(S.auto&&!S.busy)next();}updateCtrl();};
 bStep.onclick=function(){AU.init();AU.fx('tap');if(S.mode==='edit'){if(!begin())return;S.auto=false;next();}else if(S.mode==='run'&&!S.auto&&!S.busy)next();updateCtrl();};
 bStop.onclick=stop;
 bSpd.onclick=function(){S.speed=S.speed===1?2:S.speed===2?4:1;bSpd.textContent=S.speed+'×';};
-var clrT=0;bClr.onclick=function(){if(S.mode!=='edit')return;if(Date.now()-clrT<2200){S.rows=[];changed();bClr.textContent='Clear';clrT=0;}else{clrT=Date.now();bClr.textContent='Sure?';setTimeout(function(){bClr.textContent='Clear';},2200);}};
+var clrT=0;bClr.onclick=function(){if(S.mode!=='edit')return;if(Date.now()-clrT<2200){S.rows=[];S.ins=0;changed();bClr.textContent='Clear';clrT=0;}else{clrT=Date.now();bClr.textContent='Sure?';setTimeout(function(){bClr.textContent='Clear';},2200);}};
 $('#bMemo').onclick=function(){if(S.mode==='done')return;showBrief();};
 $('#bStaff').onclick=function(){if(S.mode==='done')return;showStaff();};
 bHome.onclick=function(){AU.fx('tap');goHome();};
@@ -1219,7 +1430,7 @@ function showStaff(){var d=[['brain','Head of Head. Acts on the memo in his hand
   showSheet('<h3>Staff directory</h3><div class="staff">'+d.map(function(r){return '<span class="chip c-'+r[0]+'">'+NM[r[0]]+'</span><span>'+r[1]+'</span>';}).join('')+'</div><p class="ps">House rules. One memo per person: a new one replaces the old one. Memos only travel through working tubes. Drag a step off the clipboard to bin it.</p>',[['Close',hideSheet]]);}
 function showFail(text){showSheet('<div class="stamp red">Not approved</div><h3>Incident report</h3><p>'+text+'</p>',[['Try again',stop]]);}
 function showWin(n){var v=L[S.li],star=n<=v.par,last=S.li===L.length-1;
-  showSheet('<div class="stamp green">Approved</div><h3>Smarch '+v.d+', filed</h3><p>'+v.win+'</p><p class="ps">Your procedure: '+n+' steps. Brian’s estimate: '+v.par+'.'+(star?'':' He would like that noted.')+'</p>'+(star?'<div class="stamp green two">Employee of the week</div>':''),
+  showSheet('<div class="stamp green">Approved</div><h3>'+v.mon+' '+v.d+', filed</h3><p>'+v.win+'</p><p class="ps">Your procedure: '+n+' steps. Brian’s estimate: '+v.par+'.'+(star?'':' He would like that noted.')+'</p>'+(star?'<div class="stamp green two">Employee of the week</div>':''),
     last?[['Calendar',function(){hideSheet();goHome();}],['Keep tinkering',stop,1]]:[['Next day',function(){hideSheet();loadLevel(S.li+1);}],['Calendar',function(){hideSheet();goHome();},1],['Tinker',stop,1]]);}
 
 /* ---------- editor ---------- */
@@ -1229,23 +1440,38 @@ function blk(r,kind){var o=r.op,s=HO.SENSES[o];
   if(o==='PASS')return '<div class="blk t-pass" data-op="PASS">PASS'+chip(r,'a')+'<span class="to">&#9656;</span>'+chip(r,'b')+'</div>';
   if(o==='IF')return '<div class="blk t-ctl" data-op="IF">IF'+chip(r,'a')+'<span class="to">HAS</span>'+chip(r,'b',1)+'</div>';
   if(o==='REPEAT')return '<div class="blk t-ctl" data-op="REPEAT">REPEAT</div>';
-  if(o==='END')return '<div class="blk t-ctl end" data-op="END">END '+(kind||'')+'</div>';
+  if(o==='UNTIL')return '<div class="blk t-ctl t-until" data-op="UNTIL">'+(kind==='row'?'REPEAT UNTIL':'UNTIL')+chip(r,'a')+(kind==='row'?'<span class="to">HAS</span>':'')+chip(r,'b',1)+'</div>';
+  if(o==='END')return '<div class="blk t-ctl end" data-op="END">END '+(kind&&kind!=='row'?kind:'')+'</div>';
   return '<div class="blk t-brain" data-op="'+o+'"><span class="who">BRIAN</span>'+o+'</div>';}
 function renderPalette(){pal.innerHTML=L[S.li].palette.map(function(o){return blk({op:o});}).join('');}
+var insEl=document.createElement('div');insEl.id='insMark';
+function placeIns(){if(insEl.parentNode!==rowsEl)rowsEl.appendChild(insEl);var k=S.ins==null?S.rows.length:Math.min(S.ins,S.rows.length),els=rowsEl.querySelectorAll('.row'),top,ind=0;
+  if(k<els.length)top=els[k].offsetTop;else if(els.length)top=els[els.length-1].offsetTop+els[els.length-1].offsetHeight;else top=6;
+  var ref=els[k]||els[k-1];if(ref){var sp=ref.querySelector('.ind');ind=sp?sp.offsetWidth:0;if(!els[k]&&ref&&/IF|REPEAT|UNTIL/.test(S.rows[k-1]&&S.rows[k-1].op))ind+=11;}
+  insEl.style.top=top+'px';insEl.style.left=(26+ind)+'px';insEl.style.display=S.mode==='edit'?'block':'none';}
+function setIns(k){S.ins=Math.max(0,Math.min(S.rows.length,k));placeIns();}
 function renderRows(){var m=HO.link(S.rows)||[],d=0,h='',i,r;
   for(i=0;i<S.rows.length;i++){r=S.rows[i];if(r.op==='END')d=Math.max(0,d-1);
-    h+='<div class="row'+(i===S.cur?' cur':'')+(i===S.bad?' bad':'')+'" data-i="'+i+'"><span class="num">'+(i+1)+'</span><span class="ind" style="width:'+d*11+'px"></span>'+blk(r,r.op==='END'&&m[i]!==undefined?S.rows[m[i]].op:'')+'</div>';
-    if(r.op==='IF'||r.op==='REPEAT')d++;}
-  rowsEl.innerHTML=h+'<div class="tail"></div>';rowsEl.appendChild(mark);mark.style.display='none';
+    h+='<div class="row'+(i===S.cur?' cur':'')+(i===S.bad?' bad':'')+'" data-i="'+i+'"><span class="num">'+(i+1)+'</span><span class="ind" style="width:'+d*11+'px"></span>'+blk(r,r.op==='END'&&m[i]!==undefined?S.rows[m[i]].op:'row')+'</div>';
+    if(r.op==='IF'||r.op==='REPEAT'||r.op==='UNTIL')d++;}
+  rowsEl.innerHTML=h+'<div class="tail"></div>';rowsEl.appendChild(mark);mark.style.display='none';placeIns();
   var n=HO.count(S.rows);foot.innerHTML='<span>'+n+(n===1?' step':' steps')+'</span><span>Brian’s estimate: '+L[S.li].par+'</span>';}
-function changed(){S.bad=-1;SAVE.prog[S.li]=JSON.parse(JSON.stringify(S.rows));persist();renderRows();}
+var wrapEl=document.createElement('div');wrapEl.id='wrapNote';progEl.appendChild(wrapEl);var wrapT=0;
+function showWrapNote(op){wrapEl.innerHTML='<span>Wrapped every step in the loop.</span><button>Just add it</button>';wrapEl.classList.add('on');clearTimeout(wrapT);wrapT=setTimeout(hideWrapNote,6000);
+  wrapEl.querySelector('button').onclick=function(e){e.stopPropagation();if(S.mode!=='edit')return;var r0=S.rows[0];if(!r0||r0.op!==op||S.rows[S.rows.length-1].op!=='END')return hideWrapNote();
+    S.rows=S.rows.slice(1,-1).concat([r0,{op:'END'}]);S.ins=S.rows.length-1;hideWrapNote(true);changed();var k=S.rows.length-2,el=rowsEl.querySelector('.row[data-i="'+k+'"]');if(el)rowsEl.scrollTop=el.offsetTop+70-rowsEl.clientHeight;AU.fx('pick');closePicker();if(op==='UNTIL')setTimeout(function(){openPicker(k,'a');},0);};}
+function hideWrapNote(){wrapEl.classList.remove('on');clearTimeout(wrapT);}
+function changed(){S.bad=-1;if(S.ins==null||S.ins>S.rows.length)S.ins=S.rows.length;if(S.ins<0)S.ins=0;SAVE.prog[S.li]=JSON.parse(JSON.stringify(S.rows));persist();renderRows();}
 function setCur(i){var old=rowsEl.querySelector('.row.cur');if(old)old.classList.remove('cur');S.cur=i;if(i<0)return;var el=rowsEl.querySelector('.row[data-i="'+i+'"]');if(!el)return;el.classList.add('cur');var top=el.offsetTop,h=rowsEl.clientHeight;if(top<rowsEl.scrollTop+8)rowsEl.scrollTop=top-8;else if(top+38>rowsEl.scrollTop+h)rowsEl.scrollTop=top+44-h;}
 function markBad(){var el=rowsEl.querySelector('.row[data-i="'+S.bad+'"]');if(el)el.classList.add('bad');}
 function insertNew(op,k){if(S.rows.length>=48)return;AU.fx('pick');
-  var add=op==='IF'?[{op:'IF',a:null,b:null},{op:'END'}]:op==='REPEAT'?[{op:'REPEAT'},{op:'END'}]:op==='PASS'?[{op:'PASS',a:null,b:null}]:[{op:op}];
-  S.rows.splice.apply(S.rows,[k,0].concat(add));changed();
+  if((op==='REPEAT'||op==='UNTIL')&&k>=S.rows.length&&S.rows.length){
+    S.rows=[op==='UNTIL'?{op:'UNTIL',a:null,b:null}:{op:'REPEAT'}].concat(S.rows,[{op:'END'}]);S.ins=S.rows.length;changed();rowsEl.scrollTop=0;showWrapNote(op);
+    if(op==='UNTIL')setTimeout(function(){openPicker(0,'a');},0);if(typeof tutCheck==='function')tutCheck();return;}
+  var add=op==='UNTIL'?[{op:'UNTIL',a:null,b:null},{op:'END'}]:op==='IF'?[{op:'IF',a:null,b:null},{op:'END'}]:op==='REPEAT'?[{op:'REPEAT'},{op:'END'}]:op==='PASS'?[{op:'PASS',a:null,b:null}]:[{op:op}];
+  S.rows.splice.apply(S.rows,[k,0].concat(add));S.ins=k+1;changed();
   var el=rowsEl.querySelector('.row[data-i="'+k+'"]');if(el){var top=el.offsetTop,h=rowsEl.clientHeight,need=(op==='IF'||op==='REPEAT')?70:38;if(top+need>rowsEl.scrollTop+h)rowsEl.scrollTop=top+need+4-h;else if(top<rowsEl.scrollTop+4)rowsEl.scrollTop=Math.max(0,top-6);}
-  if(op==='IF'||op==='PASS')setTimeout(function(){openPicker(k,'a');},0);}
+  if(op==='IF'||op==='PASS'||op==='UNTIL')setTimeout(function(){openPicker(k,'a');},0);}
 
 var drag=null,ghost=null,scrollV=0;
 function down(e){if(S.mode!=='edit'||drag||(e.button!=null&&e.button>0))return;
@@ -1255,7 +1481,7 @@ function down(e){if(S.mode!=='edit'||drag||(e.button!=null&&e.button>0))return;
   if(!drag.chip)closePicker();}
 function beginDrag(){var d=drag,src=d.el,n=0;d.on=true;closePicker();
   if(!d.pal){var m=HO.link(S.rows)||[],r=S.rows[d.i];d.a=d.b=d.i;
-    if((r.op==='IF'||r.op==='REPEAT')&&m[d.i]!==undefined)d.b=m[d.i];else if(r.op==='END'&&m[d.i]!==undefined){d.a=m[d.i];src=rowsEl.querySelector('.row[data-i="'+d.a+'"] .blk')||src;}
+    if((r.op==='IF'||r.op==='REPEAT'||r.op==='UNTIL')&&m[d.i]!==undefined)d.b=m[d.i];else if(r.op==='END'&&m[d.i]!==undefined){d.a=m[d.i];src=rowsEl.querySelector('.row[data-i="'+d.a+'"] .blk')||src;}
     for(var i=d.a;i<=d.b;i++){var el=rowsEl.querySelector('.row[data-i="'+i+'"]');if(el)el.classList.add('lift');}n=d.b-d.a-1;}
   ghost=src.cloneNode(true);ghost.classList.add('ghost');ghost.style.width=src.offsetWidth+'px';
   if(n>0){var s=document.createElement('span');s.className='more';s.textContent='+'+n;ghost.appendChild(s);ghost.style.width='auto';}
@@ -1277,21 +1503,21 @@ function move(e){var d=drag;if(!d||e.pointerId!==d.id)return;
   var pr=rowsEl.getBoundingClientRect();scrollV=k<0?0:e.clientY-30<pr.top+26?-5:e.clientY-30>pr.bottom-26?5:0;}
 function up(e){var d=drag;if(!d||e.pointerId!==d.id)return;drag=null;scrollV=0;
   try{d.el.releasePointerCapture(d.id);}catch(_){}
-  if(!d.on){if(d.pal)insertNew(d.op,S.rows.length);else if(d.chip)openPicker(d.i,d.chip.getAttribute('data-p'));else showRoute(S.rows[d.i]);if(typeof tutCheck==='function')tutCheck();return;}
+  if(!d.on){if(d.pal)insertNew(d.op,S.ins==null?S.rows.length:S.ins);else if(d.chip)openPicker(d.i,d.chip.getAttribute('data-p'));else{showRoute(S.rows[d.i]);setIns(d.i+1);}if(typeof tutCheck==='function')tutCheck();return;}
   var k=where(e.clientX,e.clientY-30,d);
   if(ghost){ghost.remove();ghost=null;}mark.style.display='none';
   if(d.pal){if(k>=0)insertNew(d.op,k);return;}
   var n=d.b-d.a+1;
   AU.fx(k<0?'bin':'drop');
-  if(k<0)S.rows.splice(d.a,n);
-  else if(k<d.a||k>d.b+1){var sl=S.rows.splice(d.a,n);if(k>d.a)k-=n;S.rows.splice.apply(S.rows,[k,0].concat(sl));}
+  if(k<0){S.rows.splice(d.a,n);if(S.ins>d.b)S.ins-=n;else if(S.ins>d.a)S.ins=d.a;}
+  else if(k<d.a||k>d.b+1){var sl=S.rows.splice(d.a,n);if(k>d.a)k-=n;S.rows.splice.apply(S.rows,[k,0].concat(sl));S.ins=k+n;}
   changed();}
 function cancel(e){if(!drag||e.pointerId!==drag.id)return;drag=null;scrollV=0;if(ghost){ghost.remove();ghost=null;}renderRows();}
 pal.addEventListener('pointerdown',down);rowsEl.addEventListener('pointerdown',down);
 window.addEventListener('pointermove',move,{passive:false});window.addEventListener('pointerup',up);window.addEventListener('pointercancel',cancel);
 setInterval(function(){if(scrollV)rowsEl.scrollTop+=scrollV;},16);
 
-function openPicker(i,p){var r=S.rows[i];if(!r||S.mode!=='edit')return;var lev=L[S.li],h='',tok=r.op==='IF'&&p==='b';
+function openPicker(i,p){var r=S.rows[i];if(!r||S.mode!=='edit')return;var lev=L[S.li],h='',tok=(r.op==='IF'||r.op==='UNTIL')&&p==='b';
   if(tok)lev.tokens.concat(['ANYTHING','NOTHING']).forEach(function(v){h+='<span class="chip tok" data-v="'+v+'">'+v+'</span>';});
   else TE.forEach(function(v){var c='chip c-'+v;if(r.op==='PASS'){var o=p==='a'?r.b:r.a;if(o===v)c+=' off';else if(o&&!tubeOpen(o,v))c+=' far';}h+='<span class="chip '+c+'" data-v="'+v+'">'+NM[v]+'</span>';});
   pick.innerHTML=h;pick.setAttribute('data-i',i);pick.setAttribute('data-p',p);pick.classList.add('on');
@@ -1307,18 +1533,18 @@ document.addEventListener('contextmenu',function(e){e.preventDefault();});
 
 /* ---------- screens ---------- */
 function loadLevel(i,forceTut){var seen=0;try{seen=localStorage.getItem('head-office-tut');}catch(e){}if(forceTut){SAVE.prog[0]=null;}S.tutPending=i===0&&(forceTut||!seen);TL=[];S.li=i;S.screen='play';S.mode='edit';S.busy=false;S.auto=false;S.run=null;S.cur=-1;S.bad=-1;S.seed=newSeed();
-  S.rows=SAVE.prog[i]?JSON.parse(JSON.stringify(SAVE.prog[i])):[];
+  S.rows=SAVE.prog[i]?JSON.parse(JSON.stringify(SAVE.prog[i])):[];S.ins=S.rows.length;
   elHome.classList.add('hide');elPlay.classList.remove('hide');bHome.classList.remove('hide');work.classList.remove('locked');
-  elTtl.textContent='Smarch '+L[i].d+': '+L[i].title;
+  elTtl.textContent=L[i].mon+' '+L[i].d+': '+L[i].title;
   layout();renderPalette();renderRows();resetScene();updateCtrl();S.openTo=1;nextChat=now+5000;
   if(!S.rows.length)showBrief();else hideSheet();}
-function goHome(){if(TUT.on)tutEnd(false);closeMenu();TAP.from=null;RT=null;TL=[];S.mode='edit';S.busy=false;S.auto=false;S.run=null;S.screen='home';S.view=null;S.fx={};clearHands();fliers=[];closePicker();hideSheet();
+function goHome(){CALM=S.li>=28?1:(S.li===27&&SAVE.done[27]?1:0);if(TUT.on)tutEnd(false);closeMenu();TAP.from=null;RT=null;TL=[];S.mode='edit';S.busy=false;S.auto=false;S.run=null;S.screen='home';S.view=null;S.fx={};clearHands();fliers=[];closePicker();hideSheet();
   elPlay.classList.add('hide');elHome.classList.remove('hide');bHome.classList.add('hide');elTtl.textContent='';S.openTo=0;renderHome();layout();}
 function layout(){var app=$('#app'),cs=getComputedStyle(app),W=app.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),H=app.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom),desk=$('#desk');
   var play=S.screen==='play',np=play?L[S.li].palette.length:0;
   if(play)desk.style.height=Math.max(Math.min(236,H*.36),46+14+np*23)+'px';else desk.style.height='auto';
   var dh=desk.offsetHeight,sc=Math.max(.5,Math.min(W/390,(H-30-dh)/VH)),dpr=Math.min(window.devicePixelRatio||1,3);
-  if(!play&&(H-30-dh)/VH>W/390){desk.style.height=(H-30-VH*W/390)+'px';}
+  if((H-30-dh)/VH>W/390){desk.style.height=(H-30-VH*W/390)+'px';}
   CAM.z=390*sc>=W*.88?1.18:1;
   K=sc*dpr;cv.width=Math.round(390*K);cv.height=Math.round(VH*K);cv.style.width=390*sc+'px';cv.style.height=VH*sc+'px';
   [bg,fg,face].forEach(function(c){c.width=cv.width;c.height=cv.height;});buildStatic();}
@@ -1376,11 +1602,20 @@ var IC={
  hush:function(g){g.beginPath();g.moveTo(-16,-6);g.lineTo(-8,-6);g.lineTo(2,-15);g.lineTo(2,15);g.lineTo(-8,6);g.lineTo(-16,6);g.closePath();g.fillStyle='#5d646a';g.fill();fr(g,-16,-6,8,12,1,'#7d868c');g.lineCap='round';line(g,7,-7,17,7,'#c8322b',3.4);line(g,17,-7,7,7,'#c8322b',3.4);g.lineCap='butt';},
  left:function(g){g.beginPath();g.moveTo(-17,0);g.lineTo(-3,-13);g.lineTo(-3,-6);g.lineTo(16,-6);g.lineTo(16,6);g.lineTo(-3,6);g.lineTo(-3,13);g.closePath();g.fillStyle='#f2c94c';g.fill();g.strokeStyle='#7a5a0c';g.lineWidth=1.6;g.stroke();},
  right:function(g){g.save();g.scale(-1,1);IC.left(g);g.restore();},
+ cushion:function(g){g.beginPath();g.moveTo(-17,4);g.quadraticCurveTo(-18,-12,-2,-13);g.quadraticCurveTo(16,-14,17,2);g.quadraticCurveTo(18,14,0,13);g.quadraticCurveTo(-16,14,-17,4);g.closePath();g.fillStyle='#d9566a';g.fill();g.strokeStyle='#8c3442';g.lineWidth=1.4;g.stroke();ell(g,-5,-5,7,3,'rgba(255,255,255,.3)');g.beginPath();g.moveTo(15,4);g.quadraticCurveTo(20,6,19,10);g.lineTo(16,8);g.closePath();g.fillStyle='#b8435a';g.fill();g.strokeStyle='rgba(140,140,150,.8)';g.lineWidth=1.4;g.lineCap='round';[0,1,2].forEach(function(k){g.beginPath();g.arc(22,9,3+k*3,-.6,.6);g.stroke();});g.lineCap='butt';},
+ kettle:function(g){fr(g,-15,13,30,5,2,'#5d646a');g.beginPath();g.moveTo(-12,13);g.lineTo(-9,-8);g.lineTo(9,-8);g.lineTo(12,13);g.closePath();g.fillStyle='#c9d0d4';g.fill();g.strokeStyle='#7d868c';g.lineWidth=1.2;g.stroke();g.beginPath();g.moveTo(-10,0);g.lineTo(-19,-6);g.lineTo(-17,-8);g.lineTo(-9,-4);g.closePath();g.fillStyle='#aab3b8';g.fill();g.strokeStyle='#27222b';g.lineWidth=3;g.beginPath();g.moveTo(-6,-8);g.quadraticCurveTo(0,-19,6,-8);g.stroke();fr(g,6,-2,6,10,2,'#2b2f33');circ(g,9,1,1.2,'#c8322b');fr(g,-7,-7,3,18,1.5,'rgba(255,255,255,.5)');steam(g,[-17,-21]);},
+ egg:function(g){g.beginPath();g.moveTo(0,-18);g.bezierCurveTo(12,-18,15,4,13,9);g.bezierCurveTo(11,16,4,18,0,18);g.bezierCurveTo(-4,18,-11,16,-13,9);g.bezierCurveTo(-15,4,-12,-18,0,-18);g.closePath();g.fillStyle='#8b5a2b';g.fill();g.save();g.clip();fr(g,-16,-2,32,6,0,'#f2c94c');for(var x=-14;x<16;x+=6){g.beginPath();g.moveTo(x,-2);g.lineTo(x+3,-6);g.lineTo(x+6,-2);g.fillStyle='#d9566a';g.fill();}[[-6,9],[4,11],[0,6],[7,4],[-8,3]].forEach(function(c){circ(g,c[0],c[1],1.6,'#1f8f8c');});g.restore();ell(g,-5,-10,3,5,'rgba(255,255,255,.35)');},
+ plant:function(g){g.beginPath();g.moveTo(-11,4);g.lineTo(11,4);g.lineTo(8,19);g.lineTo(-8,19);g.closePath();g.fillStyle='#c8553b';g.fill();fr(g,-13,1,26,5,1.5,'#b8492f');[[-.9,'#3f7a3a'],[-.35,'#4f8a45'],[.3,'#3f7a3a'],[.85,'#4f8a45'],[0,'#5f9e3a']].forEach(function(l,i){g.save();g.translate(0,2);g.rotate(l[0]);ell(g,0,-11-(i===4?3:0),4,10,l[1]);line(g,0,-3,0,-18-(i===4?3:0),'rgba(20,50,20,.4)',1);g.restore();});},
+ bus:function(g){fr(g,-18,-13,36,26,4,'#c8322b');fr(g,-15,-9,30,9,1.5,'#cfe6f5');for(var x=-15;x<15;x+=8)line(g,x+7.5,-9,x+7.5,0,'#c8322b',1.6);fr(g,-18,3,36,2.4,0,'#f2c94c');circ(g,-10,14,4.4,'#27222b');circ(g,10,14,4.4,'#27222b');circ(g,-10,14,1.6,'#9aa3a6');circ(g,10,14,1.6,'#9aa3a6');fr(g,-6,-17,12,4,1,'#27222b');txt(g,'42',0,-15,'800 4.5px '+UI,'#ffd866');},
+ carrot:function(g){g.beginPath();g.moveTo(-5,-8);g.quadraticCurveTo(0,-11,6,-7);g.lineTo(2,18);g.quadraticCurveTo(1,20,0,18);g.closePath();g.fillStyle='#f28a2a';g.fill();[[-1,-2],[3,4],[0,10]].forEach(function(c){line(g,c[0]-3,c[1],c[0]+1,c[1]+1,'#c8651a',1.3);});[[-.5,'#4f8a45'],[0,'#5f9e3a'],[.5,'#3f7a3a']].forEach(function(l){g.save();g.translate(0,-9);g.rotate(l[0]);ell(g,0,-6,2.4,7,l[1]);g.restore();});},
+ sheep:function(g){[-8,-3,4,9].forEach(function(x){fr(g,x-1.4,6,2.8,11,1.2,'#27222b');});[[-9,0,7],[-2,-4,8],[6,-2,7],[0,4,8],[-7,5,6],[8,5,6]].forEach(function(c){circ(g,c[0],c[1],c[2],'#f7f2ea');});g.strokeStyle='#d8d0c0';g.lineWidth=1;[[-9,0,7],[-2,-4,8],[6,-2,7]].forEach(function(c){g.beginPath();g.arc(c[0],c[1],c[2],3.4,4.6);g.stroke();});ell(g,15,-3,5,6,'#27222b');ell(g,11,-7,3,1.6,'#27222b');circ(g,16,-4,1,'#fff');},
+ tooth:function(g){g.beginPath();g.moveTo(-13,-10);g.quadraticCurveTo(-13,-18,-6,-17);g.quadraticCurveTo(0,-15,6,-17);g.quadraticCurveTo(13,-18,13,-10);g.quadraticCurveTo(13,-2,9,4);g.lineTo(7,16);g.quadraticCurveTo(5,19,3,15);g.lineTo(1,6);g.lineTo(-1,6);g.lineTo(-3,15);g.quadraticCurveTo(-5,19,-7,16);g.lineTo(-9,4);g.quadraticCurveTo(-13,-2,-13,-10);g.closePath();g.fillStyle='#fbf8ee';g.fill();g.strokeStyle='#a99c80';g.lineWidth=1.4;g.stroke();ell(g,-6,-10,3,4,'rgba(255,255,255,.9)');circ(g,-4,-4,1.2,'#17131a');circ(g,4,-4,1.2,'#17131a');g.strokeStyle='#17131a';g.lineWidth=1;g.beginPath();g.arc(0,-1,3,.3,Math.PI-.3);g.stroke();},
+ chest:function(g){fr(g,-16,-2,32,17,2,'#8c5a34');g.beginPath();g.moveTo(-16,-2);g.lineTo(-16,-8);g.quadraticCurveTo(0,-18,16,-8);g.lineTo(16,-2);g.closePath();g.fillStyle='#a8703f';g.fill();fr(g,-16,-3,32,3,0,'#caa55a');fr(g,-3,-6,6,9,1,'#caa55a');circ(g,0,0,1.4,'#27222b');[-12,12].forEach(function(x){fr(g,x-1.5,-12,3,27,0,'#caa55a');});g.fillStyle='#ffd866';g.beginPath();g.moveTo(10,-17);g.lineTo(11.4,-13.4);g.lineTo(15,-12);g.lineTo(11.4,-10.6);g.lineTo(10,-7);g.lineTo(8.6,-10.6);g.lineTo(5,-12);g.lineTo(8.6,-13.4);g.closePath();g.fill();},
  party:function(g){g.beginPath();g.moveTo(-14,16);g.lineTo(-4,-8);g.lineTo(8,4);g.closePath();g.fillStyle='#c8322b';g.fill();line(g,-9,4,-1,10,'#f2c94c',2.4);line(g,-6,-2,3,7,'#f2c94c',2.4);[[6,-12,'#1f8f8c'],[12,-4,'#f2c94c'],[2,-16,'#d9566a'],[14,-14,'#4a8ee6'],[16,4,'#d9566a']].forEach(function(c){fr(g,c[0],c[1],3.4,3.4,1,c[2]);});g.strokeStyle='#5f8f3a';g.lineWidth=1.6;g.beginPath();g.moveTo(0,-8);g.quadraticCurveTo(4,-18,10,-17);g.stroke();}
 };
 function drawIcon(g,k,x,y,s){var f=IC[k];if(!f)return;g.save();g.translate(x,y);g.scale(s/40,s/40);f(g);g.restore();}
 var E2I={'☕':'coffee','🧑‍💼':'steve','🚪':'door','🐟':'fish','🦙':'llama','🥧':'pie','🦜':'parrot','🥦':'sprouts','🐕':'dog','🚦':'traffic','🔴':'lightRed','🟢':'lightGreen','🧀':'cheese','🍵':'tea','✊':'fist','🔥':'fire','💨':'smoke','🧁':'muffin','🗑️':'bin','📰':'newspaper','🍌':'banana','🧦':'sock','⏰':'alarm','🐦':'bird','📦':'box','✉️':'letter','🎤':'mic','🤡':'mime','🪢':'rope','🧱':'wall','🍷':'wine','🦆':'duck','🦉':'owl','🛗':'lift','🙈':'peek','🌸':'flower','🦨':'skunk','🧴':'bottle','🪧':'sign','🎂':'cake','🥣':'bowl','🕺':'disco','🤫':'hush','⬅️':'left','➡️':'right','⛈️':'storm','🌧️':'rain','☀️':'sun','🎉':'party'};
-function iconKey(v){return v.key==='pigeon'?'pigeon':(E2I[v.icon]||'party');}
+function iconKey(v){return v.ik||(v.key==='pigeon'?'pigeon':(E2I[v.icon]||'party'));}
 window.__icons={IC:IC,draw:drawIcon};
 function paintIcons(root){var d=Math.min(window.devicePixelRatio||1,3);root.querySelectorAll('canvas.ic').forEach(function(c){var s=+c.getAttribute('data-s')||22;c.width=s*d;c.height=s*d;c.style.width=s+'px';c.style.height=s+'px';var g=c.getContext('2d');g.setTransform(d,0,0,d,0,0);drawIcon(g,c.getAttribute('data-k'),s/2,s/2,s);});}
 
@@ -1405,23 +1640,30 @@ function stripG(g,v){var lev=L[S.li],c=v.rounds[Math.min(v.r,v.n-1)],sh=c.show,i
   if(v.done)sh='🎉';
   var ox=0;if(S.fx.tray!=null){var u=Math.min(1,(clock-S.fx.tray)/520);ox=(1-ease(u))*230;}
   if(sh&&sh[0]==='#'){var w=Math.max(70,sh.length*13+24);fr(g,195+ox-w/2,14,w,32,3,'#17110e');rr(g,195+ox-w/2,14,w,32,3);g.strokeStyle='#f2c94c';g.lineWidth=1.2;g.stroke();txt(g,sh.slice(1),195+ox,31,'800 17px '+UI,'#ffd866');}
+  else if(sh&&sh[0]==='@')drawIcon(g,sh.slice(1),195+ox,37+Math.sin(now/300)*1.2,40);
   else if(sh)drawIcon(g,E2I[sh]||'party',195+ox,37+Math.sin(now/300)*1.2,40);
-  if(v.n>1&&!lev.nodots)for(i=0;i<v.n;i++){var px=22+i*11;circ(g,px,14,5,'#17110e');circ(g,px,14,3.8,i<v.r?'#7dffa0':'#4a4a52');}
+  if(v.n>1&&v.n<=12&&!lev.nodots)for(i=0;i<v.n;i++){var px=22+i*11;circ(g,px,14,5,'#17110e');circ(g,px,14,3.8,i<v.r?'#7dffa0':'#4a4a52');}
   if(lev.cases>1){for(i=0;i<lev.cases;i++){var qx=22+i*12;fr(g,qx-5,9,10,10,2,i<v.ci||(i===v.ci&&v.done)?'#2f7d4f':i===v.ci?'#f2c94c':'#9aa5a0');}}
 }
 
 /* ---------- Smarch calendar ---------- */
 var XSVG='<svg class="x" viewBox="0 0 40 40" preserveAspectRatio="none"><path d="M7 7 Q19 19 34 33"/><path d="M33 6 Q21 19 7 34"/></svg>';
-function renderHome(){var nd=SAVE.done.indexOf(0),h='',i,n=0;
-  for(i=0;i<28;i++){var v=L[i],dn=SAVE.done[i],open=SAVE.unlocked||i===0||SAVE.done[i-1]||dn;if(dn)n++;
-    h+='<button class="cell'+(i%7>4?' wkd':'')+(dn?' done':'')+(!open?' lock':'')+(i===nd?' next':'')+(SAVE.fresh===i?' fresh':'')+'" data-i="'+i+'" aria-label="Smarch '+v.d+': '+v.title+'"><span class="n">'+v.d+'</span><canvas class="ic" data-k="'+iconKey(v)+'" data-s="22"></canvas>'+(dn?XSVG:'')+'</button>';}
+var CALM=null;
+function monthOpen(mo){return mo===0||SAVE.unlocked||!!SAVE.done[27];}
+function renderHome(){var nd=SAVE.done.indexOf(0),h='',i,n=0;if(CALM==null)CALM=nd>=28&&monthOpen(1)?1:0;var base=CALM*28,mo=CALM,open0=monthOpen(mo);
+  for(i=base;i<base+28;i++){var v=L[i],dn=SAVE.done[i],open=open0&&(SAVE.unlocked||i===0||SAVE.done[i-1]||dn);if(dn)n++;
+    h+='<button class="cell'+((i-base)%7>4?' wkd':'')+(dn?' done':'')+(!open?' lock':'')+(i===nd?' next':'')+(SAVE.fresh===i?' fresh':'')+'" data-i="'+i+'" aria-label="'+v.mon+' '+v.d+': '+v.title+'"><span class="n">'+v.d+'</span><canvas class="ic" data-k="'+iconKey(v)+'" data-s="22"></canvas>'+(dn?XSVG:'')+'</button>';}
   elDays.innerHTML=h;paintIcons(elDays);
-  document.getElementById('calSub').textContent=n===28?'All crossed off. Lousy weather, though.':n+' of 28 crossed off';
+  var hm=document.getElementById('calMon');hm.textContent=mo?'Smapril':'Smarch';hm.classList.toggle('spr',!!mo);
+  document.getElementById('mPrev').disabled=mo===0;document.getElementById('mNext').disabled=mo===1;
+  document.getElementById('calSub').textContent=!open0?'Opens when Smarch is done':n===28?(mo?'All crossed off. Smay is under review.':'All crossed off. Lousy weather, though.'):n+' of 28 crossed off';
   if(SAVE.fresh!=null){setTimeout(function(){AU.fx('cross');},250);SAVE.fresh=null;}}
+function flipMonth(dm){var nm=Math.max(0,Math.min(1,CALM+dm));if(nm===CALM)return;CALM=nm;AU.fx('page');var c=document.querySelector('.cal');c.classList.remove('turn');void c.offsetWidth;c.classList.add('turn');renderHome();}
+document.getElementById('mPrev').onclick=function(){flipMonth(-1);};document.getElementById('mNext').onclick=function(){flipMonth(1);};
 elDays.addEventListener('click',function(e){var b=e.target.closest('.cell');if(!b)return;var i=+b.getAttribute('data-i');
   if(b.classList.contains('lock')){AU.fx('no');b.classList.remove('nope');void b.offsetWidth;b.classList.add('nope');return;}showDay(i);});
 function showDay(i){var v=L[i],b=SAVE.best[i];AU.fx('page');
-  showSheet('<h3>Smarch '+v.d+'</h3><p class="meta">'+v.wd+'</p><p><b>'+v.title+'</b><br>'+v.blurb+'</p>'+(SAVE.done[i]?'<p class="ps">Crossed off. Your best: '+b+' steps. Brian’s estimate: '+v.par+'.</p>':''),
+  showSheet('<h3>'+v.mon+' '+v.d+'</h3><p class="meta">'+v.wd+'</p><p><b>'+v.title+'</b><br>'+v.blurb+'</p>'+(SAVE.done[i]?'<p class="ps">Crossed off. Your best: '+b+' steps. Brian’s estimate: '+v.par+'.</p>':''),
     [['Clock in',function(){hideSheet();loadLevel(i);}],['Not today',hideSheet,1]]);}
 
 /* ---------- opening titles ---------- */
@@ -1555,7 +1797,7 @@ function opScene(g,t,W,H,sc,ox,oy){var i;
   if(t>=6&&!OP.cheer){OP.cheer=1;AU.fx('win');AU.fx('whoosh');setTimeout(function(){AU.fx('lever');},250);}
   var sy=null;if(t<0)sy=150;else if(t<.5)sy=150-ease(t/.5)*280;else if(t>=5.6)sy=-90+240*back(Math.min(1,(t-5.6)/.7));
   opLogo(g,t);
-  if(OP.toast){var ta=(performance.now()-OP.toast)/1000;if(ta<3){g.globalAlpha=Math.min(1,ta*4,(3-ta)*2);fr(g,85,196,220,30,4,'#f2c94c');rr(g,85,196,220,30,4);g.strokeStyle='#27222b';g.lineWidth=2;g.stroke();txt(g,'All of Smarch unlocked',195,212,'800 17px '+UI,'#27222b');g.globalAlpha=1;}}
+  if(OP.toast){var ta=(performance.now()-OP.toast)/1000;if(ta<3){g.globalAlpha=Math.min(1,ta*4,(3-ta)*2);fr(g,85,196,220,30,4,'#f2c94c');rr(g,85,196,220,30,4);g.strokeStyle='#27222b';g.lineWidth=2;g.stroke();txt(g,'Every day unlocked',195,212,'800 17px '+UI,'#27222b');g.globalAlpha=1;}}
 }
 function opFrame(){if(!OP.on)return;requestAnimationFrame(opFrame);var W=innerWidth,H=innerHeight,sc=Math.min(W/390,H/700);OP.sc=sc;OP.ox=(W-390*sc)/2;OP.oy=(H-700*sc)/2;var t=OP.t0==null?-1:(performance.now()-OP.t0)/1000;
   opScene(OP.c.getContext('2d'),t,W,H,sc,(W-390*sc)/2,(H-700*sc)/2);
@@ -1564,7 +1806,7 @@ function openTitles(){OP.on=true;OP.cheer=0;CAST.forEach(function(c){c.popped=0;
 function opHit(e){var x=(e.clientX-OP.ox)/OP.sc,y=(e.clientY-OP.oy)/OP.sc;
   if(x>-10&&x<70&&y>270&&y<500){AU.init();var t=OP.t0==null?-1:(performance.now()-OP.t0)/1000,on=OP.lamp!=null?OP.lamp:(t>=6.25);OP.lamp=!on;if(on)OP.flips++;AU.fx('lever');return true;}
   if(OP.brain&&Math.hypot(x-OP.brain[0],y-OP.brain[1])<38){AU.init();
-    if(OP.flips>=5&&!SAVE.unlocked){SAVE.unlocked=true;persist();renderHome();AU.fx('win');setTimeout(function(){AU.say('All of Smarch. Unlocked.');},500);OP.toast=performance.now();}
+    if(OP.flips>=5&&!SAVE.unlocked){SAVE.unlocked=true;persist();renderHome();AU.fx('win');setTimeout(function(){AU.say('Every day. Unlocked.');},500);OP.toast=performance.now();}
     else AU.fx('pop');return true;}
   return false;}
 OP.el.addEventListener('click',function(e){if(opHit(e))return;var t=OP.t0==null?-1:(performance.now()-OP.t0)/1000;
@@ -1581,24 +1823,28 @@ function routeFor(r){if(!r)return null;var o=r.op,s=HO.SENSES[o],a,b;
   if(s){var p=ORGAN[s];return {pts:[p,[(p[0]+hand(s)[0])/2,p[1]-(s==='mouth'?18:0)],hand(s)],label:NM[s]+'.'+o+'()'};}
   if(o==='PASS'&&r.a&&r.b){if(r.a===r.b)return null;var ok=tubeOpen(r.a,r.b);
     return {pts:ok?route(r.a,r.b):[hand(r.a),hand(r.b)],bad:!ok,label:ok?'PASS('+NM[r.a]+'→'+NM[r.b]+')':'NO ROUTE: '+NM[r.a]+'→'+NM[r.b]};}
-  if(o==='IF'&&r.a)return {ring:r.a,pts:[hand(r.a)],label:'IF '+NM[r.a]+'.has('+(r.b||'?')+')'};
+  if((o==='IF'||o==='UNTIL')&&r.a)return {ring:r.a,pts:[hand(r.a)],label:(o==='IF'?'IF ':'UNTIL ')+NM[r.a]+'.has('+(r.b||'?')+')'};
   if(o==='REPEAT'||o==='END')return null;
   return {pts:[hand('brain'),[180,96],[195,60]],label:'BRIAN.'+o+'()'};}
 function showRoute(r,ms){var x=routeFor(r);if(!x)return;x.t0=performance.now();x.d=ms||2600;RT=x;}
+window.__route=function(r,ms){showRoute(r,ms);};
 function drawRoute(g){if(!RT)return;var age=performance.now()-RT.t0;if(age>RT.d){RT=null;return;}
   var a=Math.min(1,age/150,(RT.d-age)/400),pts=RT.pts,col=RT.bad?'255,75,62':'57,255,122',i;
   g.save();g.globalAlpha=a;g.lineJoin='round';g.lineCap='round';
   function path(){g.beginPath();g.moveTo(pts[0][0],pts[0][1]);for(i=1;i<pts.length;i++)g.lineTo(pts[i][0],pts[i][1]);}
   if(RT.ring){var h=pts[0];g.shadowColor='rgb('+col+')';g.shadowBlur=12*K;g.beginPath();g.arc(h[0],h[1]+20,24,0,6.2832);g.strokeStyle='rgba('+col+',.9)';g.lineWidth=4;g.stroke();g.shadowBlur=0;g.setLineDash([5,4]);g.lineDashOffset=-now/30;g.strokeStyle='#fff';g.lineWidth=1.4;g.stroke();g.setLineDash([]);}
   else if(pts.length>1){
-    var e=pts[pts.length-1],q=pts[pts.length-2],ang=Math.atan2(e[1]-q[1],e[0]-q[0]),reveal=Math.min(1,age/450),tip=along(pts,reveal);
-    var sub=[pts[0]],acc=0,tot=0;for(i=1;i<pts.length;i++)tot+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);
-    for(i=1;i<pts.length;i++){var sl=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);if(acc+sl<=reveal*tot){sub.push(pts[i]);acc+=sl;}else break;}sub.push(tip);
-    var P0=pts;pts=sub;
+    var cl=[pts[0]];for(i=1;i<pts.length;i++){var lp=cl[cl.length-1];if(Math.hypot(pts[i][0]-lp[0],pts[i][1]-lp[1])>1.5)cl.push(pts[i]);}
+    var P0=pts,seg=[],tot=0;for(i=1;i<cl.length;i++){var sl=Math.hypot(cl[i][0]-cl[i-1][0],cl[i][1]-cl[i-1][1]);seg.push(sl);tot+=sl;}
+    function cut(D){var o=[cl[0]],acc=0;for(var k=0;k<seg.length;k++){if(acc+seg[k]<D){o.push(cl[k+1]);acc+=seg[k];}else{var f=(D-acc)/seg[k];o.push([cl[k][0]+(cl[k+1][0]-cl[k][0])*f,cl[k][1]+(cl[k+1][1]-cl[k][1])*f,k]);return o;}}o[o.length-1]=o[o.length-1].concat([seg.length-1]);return o;}
+    var reveal=1-Math.pow(1-Math.min(1,age/450),2),D=Math.max(.01,reveal*tot),full=cut(D),tip=full[full.length-1],sk=tip[2]==null?seg.length-1:tip[2];
+    var A=cl[sk],B=cl[sk+1]||tip,ang=Math.atan2(B[1]-A[1],B[0]-A[0]),HL=Math.min(11,D*.6);
+    pts=cut(Math.max(.01,D-HL*.7));
     g.shadowColor='rgb('+col+')';g.shadowBlur=14*K;path();g.strokeStyle='rgba('+col+',.85)';g.lineWidth=5.5;g.stroke();
     g.shadowBlur=6*K;path();g.strokeStyle='#fff';g.lineWidth=1.7;g.setLineDash([7,5]);g.lineDashOffset=-now/28;g.stroke();g.setLineDash([]);
-    if(sub.length>1){var sq=sub[sub.length-2];ang=Math.atan2(tip[1]-sq[1],tip[0]-sq[0]);}
-    g.save();g.translate(tip[0],tip[1]);g.rotate(ang);g.shadowBlur=14*K;g.beginPath();g.moveTo(-10,-7);g.lineTo(1,0);g.lineTo(-10,7);g.strokeStyle='rgba('+col+',.95)';g.lineWidth=5;g.stroke();g.shadowBlur=0;g.strokeStyle='#fff';g.lineWidth=1.8;g.stroke();g.restore();
+    if(HL>3){g.save();g.translate(tip[0],tip[1]);g.rotate(ang);var hw=HL*.72;
+      g.beginPath();g.moveTo(2,0);g.lineTo(-HL,-hw);g.lineTo(-HL*.62,0);g.lineTo(-HL,hw);g.closePath();
+      g.shadowBlur=14*K;g.fillStyle='rgb('+col+')';g.fill();g.shadowBlur=4*K;g.lineJoin='round';g.strokeStyle='#fff';g.lineWidth=1.4;g.stroke();g.restore();}
     g.shadowBlur=10*K;circ(g,P0[0][0],P0[0][1],3.6,'rgb('+col+')');g.shadowBlur=0;circ(g,P0[0][0],P0[0][1],1.6,'#fff');pts=P0;}
   g.shadowBlur=0;
   var m=pts.length>1?along(pts,.5):[pts[0][0],pts[0][1]-30],s='> '+RT.label+(age%900<450?'_':' ');
@@ -1621,7 +1867,7 @@ function openMenu(id){var lev=L[S.li],pal=lev.palette,h='',T=tech[id];
 tmenu.addEventListener('click',function(e){var b=e.target.closest('.blk');if(!b)return;var id=tmenu.getAttribute('data-id'),op=b.getAttribute('data-op');closeMenu();
   if(op==='TO'){TAP.from=id;AU.fx('pick');tutCheck();return;}
   addRow({op:op});});
-function addRow(r){if(S.rows.length>=48)return;S.rows.push(r);changed();AU.fx('pick');var el=rowsEl.querySelector('.row[data-i="'+(S.rows.length-1)+'"]');if(el)rowsEl.scrollTop=el.offsetTop+44-rowsEl.clientHeight;showRoute(r);tutCheck();}
+function addRow(r){if(S.rows.length>=48)return;var k=S.ins==null?S.rows.length:Math.min(S.ins,S.rows.length);S.rows.splice(k,0,r);S.ins=k+1;changed();AU.fx('pick');var el=rowsEl.querySelector('.row[data-i="'+k+'"]');if(el)rowsEl.scrollTop=el.offsetTop+44-rowsEl.clientHeight;showRoute(r);tutCheck();}
 function techAt(x,y){var best=null,bd=1e9;TE.forEach(function(id){var T=tech[id];if(Math.abs(x-T.x)<17&&y>T.floor-52&&y<T.floor+4){var d=Math.abs(x-T.x);if(d<bd){bd=d;best=id;}}});return best;}
 cv.addEventListener('click',function(e){if(S.screen!=='play'||S.mode!=='edit'||S.open<1||!sheet.classList.contains('hide'))return;
   var r=cv.getBoundingClientRect(),s=r.width/390,sp=toScene((e.clientX-r.left)/s,(e.clientY-r.top)/s),x=sp[0],y=sp[1],id=techAt(x,y);
