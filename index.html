@@ -2,9 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<!--
+  Head Office
+  Copyright (c) 2026 Ben Stiff @ Room46.uk. All rights reserved.
+  This game and its source code are the original work of the author.
+  You may play it for free. You may NOT copy, rehost, republish, sell,
+  or pass it off as your own, in whole or in part, without written
+  permission. Unauthorised copies can be reported to the host for
+  takedown under the DMCA.  Contact: via the home page below.
+  Build carries hidden ownership watermarks.
+-->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="app-repo" content="head-office">
-<meta name="app-version" content="1.4.3">
+<meta name="app-version" content="1.4.7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#17110e">
@@ -783,6 +793,27 @@ return {TECHS:TECHS,NAMES:NAMES,SENSES:SENSES,FOOD:FOOD,TUBES:TUBES,LEVELS:LEVEL
 (function(){
 'use strict';
 var VER=document.querySelector('meta[name="app-version"]').getAttribute('content');
+/* ---- ownership / anti-theft (edit the three CONFIG lines for your own build) ---- */
+var OWNER='Ben Stiff @ Room46.uk';                 // shown as the copyright holder
+var HOME_URL='';                 // CONFIG: your canonical page, e.g. 'https://s77ffy.github.io/head-office/' ('' = no link shown)
+var LOCK_HOST='';                // CONFIG: set to your exact host to lock, e.g. 's77ffy.github.io'. '' = lock OFF (plays anywhere)
+// Hidden watermark. Looks like a build tag; proves a copy is yours. Keep it, don't advertise it.
+var SIG='HO\u00b7'+OWNER+'\u00b7'+VER+'\u00b720261117\u00b79f3c7';
+try{window.__ho_sig=SIG;document.documentElement.setAttribute('data-build',SIG);}catch(e){}
+var CREDIT='\u00a9 2026 '+OWNER;
+function hostOK(){try{var h=location.hostname;
+  if(location.protocol==='file:'||!h||h==='localhost'||h==='127.0.0.1'||h==='[::1]')return true;
+  if(!LOCK_HOST)return true;                       // lock disabled until you pin a host
+  return h===LOCK_HOST||h==='www.'+LOCK_HOST;
+}catch(e){return true;}}
+function lockOut(){
+  var who=(HOME_URL?'<a href="'+HOME_URL+'" style="color:#f2c94c">'+HOME_URL.replace(/^https?:\/\//,'').replace(/\/$/,'')+'</a>':'the original site');
+  var d=document.createElement('div');
+  d.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:30px;background:#17110e;color:#f4ecd6;font:16px/1.5 '+TY+'';
+  d.innerHTML='<div style="font:900 30px '+UI+';letter-spacing:.06em">HEAD OFFICE</div><div>This is an unofficial copy.</div><div>Play the real, free version at<br>'+who+'.</div><div style="opacity:.5;font-size:12px">'+CREDIT+' \u00b7 all rights reserved</div>';
+  document.body.innerHTML='';document.body.appendChild(d);
+}
+/* -------------------------------------------------------------------------------- */
 var $=function(q){return document.querySelector(q);};
 var L=HO.LEVELS,NM=HO.NAMES,TE=HO.TECHS;
 var UI='"Avenir Next Condensed","DIN Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif';
@@ -1340,11 +1371,12 @@ function camApply(g){var k=camK(),z=1+(CAM.z-1)*k;g.translate(195+(CAM.ox-195)*k
 function toScene(x,y){var k=camK(),z=1+(CAM.z-1)*k,ox=195+(CAM.ox-195)*k,oy=215+(CAM.oy-215)*k,cx0=195+(CAM.cx-195)*k,cy0=215+(CAM.cy-215)*k;return [(x-ox)/z+cx0,(y-oy)/z+cy0];}
 function toView(x,y){var k=camK(),z=1+(CAM.z-1)*k,ox=195+(CAM.ox-195)*k,oy=215+(CAM.oy-215)*k,cx0=195+(CAM.cx-195)*k,cy0=215+(CAM.cy-215)*k;return [(x-cx0)*z+ox,(y-cy0)*z+oy];}
 function headT(g){g.setTransform(K,0,0,K,0,LAY.hy*DPR-72*K);}
+function drawMark(g){g.save();g.font='600 6px '+TY;g.textAlign='center';g.textBaseline='middle';g.fillStyle='rgba(255,255,255,.55)';g.shadowColor='rgba(0,0,0,.6)';g.shadowBlur=2;g.fillText(CREDIT,195,3.3);g.restore();}
 function stripDo(g,fn){g.save();g.setTransform(KS,0,0,KS,LAY.sx*DPR,0);fn();g.restore();}
 function draw(){var g=cx,i,T;
   g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,cv.width,cv.height);headT(g);
   g.save();if(shake)g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
-  if(S.open<=0){stripDo(g,function(){drawStrip(g);});drawFace(g,0);g.restore();return;}
+  if(S.open<=0){stripDo(g,function(){drawStrip(g);drawMark(g);});drawFace(g,0);g.restore();return;}
   g.save();g.beginPath();g.rect(0,72,390,VH);g.clip();camApply(g);
   var zo=S.open<1;if(zo){var ze=ease(S.open);g.save();g.globalAlpha=Math.min(1,S.open*1.5);g.translate(134,270);g.scale(.55+.45*ze,.55+.45*ze);g.translate(-134,-270);}
   g.drawImage(bg,0,0,390,VH);
@@ -1361,7 +1393,7 @@ function draw(){var g=cx,i,T;
   if(S.screen==='play'&&S.open>=1){drawRings(g);drawRoute(g);}
   for(i=0;i<5;i++){T=tech[TE[i]];if(T.bub){var bu=(clock-T.bub.t0)/T.bub.d;if(bu<1)bubble(g,T.x,T.floor-(T.memo!=null?73:61),T.bub.s);else T.bub=null;}}
   g.restore();
-  stripDo(g,function(){drawStrip(g);});
+  stripDo(g,function(){drawStrip(g);drawMark(g);});
   g.save();camApply(g);
   for(i=0;i<fliers.length;i++){var F=fliers[i],fu=ease(Math.min(1,(clock-F.t0)/F.d)),pp=along(F.pts,fu);memo(g,pp[0],pp[1],F.s,1+(F.sc1-1)*Math.sin(Math.min(1,fu*1.4)*Math.PI/2),false,Math.sin(fu*9)*.12);}
   g.restore();
@@ -1832,6 +1864,7 @@ function opScene(g,t,W,H,sc,ox,oy){var i;
   if(t>=6&&!OP.cheer){OP.cheer=1;AU.fx('win');AU.fx('whoosh');setTimeout(function(){AU.fx('lever');},250);}
   var sy=null;if(t<0)sy=150;else if(t<.5)sy=150-ease(t/.5)*280;else if(t>=5.6)sy=-90+240*back(Math.min(1,(t-5.6)/.7));
   opLogo(g,t);
+  g.save();g.setTransform(OP.d,0,0,OP.d,0,0);g.font='10px '+TY;g.textAlign='left';g.textBaseline='bottom';g.fillStyle='rgba(244,236,214,.45)';g.fillText(CREDIT,10+(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sl'))||0),H-8);g.restore();
   if(OP.toast){var ta=(performance.now()-OP.toast)/1000;if(ta<3){g.globalAlpha=Math.min(1,ta*4,(3-ta)*2);fr(g,85,196,220,30,4,'#f2c94c');rr(g,85,196,220,30,4);g.strokeStyle='#27222b';g.lineWidth=2;g.stroke();txt(g,'Every day unlocked',195,212,'800 17px '+UI,'#27222b');g.globalAlpha=1;}}
 }
 function opFrame(){if(!OP.on)return;requestAnimationFrame(opFrame);var W=innerWidth,H=innerHeight,sc=Math.min(W/390,H/700);OP.sc=sc;OP.ox=(W-390*sc)/2;OP.oy=(H-700*sc)/2;var t=OP.t0==null?-1:(performance.now()-OP.t0)/1000;
@@ -1938,7 +1971,8 @@ function sndBtns(){var p=AU.pref();bMus.classList.toggle('off',!p.m);bSfx.classL
 bMus.onclick=function(){AU.init();AU.toggle('m');sndBtns();};bSfx.onclick=function(){AU.init();AU.toggle('s');sndBtns();AU.fx('tap');};
 $('#bIntro').onclick=function(){AU.fx('tap');openTitles();};$('#bTut').onclick=function(){AU.fx('tap');loadLevel(0,true);};
 document.addEventListener('pointerdown',function(){AU.init();},{once:true});
-sndBtns();(function(){var v='v'+VER+' \u00b7 '+innerHeight+'/'+screen.height;$('#opVer').textContent=v;$('#ver').textContent=v;})();renderHome();layout();requestAnimationFrame(frame);openTitles();
+if(!hostOK()){lockOut();return;}
+sndBtns();(function(){var v='v'+VER+' \u00b7 '+OWNER;$('#opVer').textContent='v'+VER;$('#ver').textContent=v;})();renderHome();layout();requestAnimationFrame(frame);openTitles();
 })();
 </script>
 <script data-goatcounter="https://s77ffy.goatcounter.com/count"
